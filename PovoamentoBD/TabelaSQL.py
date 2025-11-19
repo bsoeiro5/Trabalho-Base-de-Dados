@@ -182,7 +182,7 @@ def CP(idContrato,idsCPV,cur):
         cur.execute('INSERT INTO CP (idContrato,idCPV) VALUES (?,?)',[idContrato,idCPV])
 
 def main():
-    df = pd.read_excel("ContratosPublicos2024.xlsx")
+    df = pd.read_excel("/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/ContratosPublicos2024.xlsx")
     con = sqlite3.connect('BaseDados.db')
     con.row_factory = sqlite3.Row
     cur = con.cursor()
