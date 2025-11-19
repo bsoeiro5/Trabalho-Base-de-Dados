@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>{{ pais.nome }}</h2>
+    <h3 class="text-muted">ID: {{ pais.idPais }}</h3>
+
+    <div class="position-relative my-4">
+        <img src="{{ caminho_imagem }}" alt="Símbolo de {{ pais.nome }}" class="image-right">
+        <audio id="audioPlayer" autoplay>
+            <source src="{{ url_for('static', filename='musicas/' + pais.nome.replace(' ', '_') + '.mp3') }}" type="audio/mpeg">
+        </audio>
+        <button id="audioControl" onclick="toggleAudio()">Parar Áudio</button>
+    </div>
+
+    <style>
+        .image-right {
+            float: right;
+            margin-left: 50px;
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin-top: 67px;
+        }
+
+        #audioControl {
+            display: inline-block;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #audioControl:hover {
+            background-color: blue;
+        }
+    </style>
+
+    <script>
+        function toggleAudio() {
+            const audio = document.getElementById('audioPlayer');
+            const button = document.getElementById('audioControl');
+
+            if (audio.paused) {
+                audio.play();
+                button.textContent = 'Parar Áudio';
+            } else {
+                audio.pause();
+                button.textContent = 'Tocar Áudio';
+            }
+        }
+    </script>
+
+    <div class="table-responsive mt-4">
+        <table class="table table-striped table-bordered table-light">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Designação do Distrito</th>
+                    <th>Nº de Municípios</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in distritos %}
+                <tr>
+                    <td class="text-center">
+                        <a href="/pais/distritos/{{ d.idDist }}/" class="text-decoration-none">{{ d.idDist }}</a>
+                    </td>
+                    <td>{{ d.nome }}</td>
+                    <td class="text-center">{{ d.n_municipios }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

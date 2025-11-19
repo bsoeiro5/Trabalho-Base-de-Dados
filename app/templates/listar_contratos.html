@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">Lista de Contratos Registados</h1>
+
+    <form method="get" action="/contratos/" class="mb-4 d-flex align-items-center">
+      <label for="contratos" class="form-label me-2 mb-0">Pesquisar Contrato por ID:</label>
+      <input type="text" id="contratos" name="idContrato" class="form-control me-2" placeholder="ID do Contrato (ex: 12345)" style="max-width: 300px;">
+      <button type="submit" class="btn btn-primary">Pesquisar</button>
+    </form>
+  
+
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-light">
+            <tr>
+                <th class="text-center">ID</th>
+                <th class="text-center">Objeto do Contrato</th>
+                <th class="text-center">Publicação</th>
+                <th class="text-center">Celebração</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in contratos %}
+            <tr>
+                <td>
+                    <a href="/contratos/{{ c.idContrato }}/" class="text-decoration-none">{{ c.idContrato }}</a>
+                </td>
+                <td>{{ c.objetoContrato }}</td>
+                <td>{{ c.dataPublicacao }}</td>
+                <td>{{ c.dataCelebracao }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

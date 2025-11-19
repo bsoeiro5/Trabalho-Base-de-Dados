@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <h2>{{ distrito.nome }}</h2>
+    <h3 class="text-muted">ID: {{ distrito.idDist }}</h3>
+
+    <div class="table-responsive mt-4">
+        <table class="table table-bordered table-light table-striped">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Designação do Município</th>
+                    <th>Nº de Contratos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in municipios %}
+                <tr>
+                    <td class="text-center">
+                        <a href="/pais/distritos/municipios/{{ m.idMun }}/" class="text-decoration-none">{{ m.idMun }}</a>
+                    </td>
+                    <td>{{ m.nome }}</td>
+                    <td class="text-center">{{ m.n_contratos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

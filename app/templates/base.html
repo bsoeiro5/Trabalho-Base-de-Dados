@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Plataforma de Contratação Pública{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        main {
+            flex: 1;
+        }
+        footer {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .image-top-right {
+            position: absolute;
+            top: -5px;
+            right: 30px;
+            width: 200px;
+        }
+        .image-top-left {
+            position: absolute;
+            top: 3px;
+            left: 30px;
+            width: 110px;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-info text-dark p-3">
+        <div class="container">
+            <h1>Análise de Plataforma de Contratação Pública (2024)</h1>
+        </div>
+        <img src="/static/governo.jpg" class="image-top-right">
+        <img src="/static/simboloPortugal.jpg" class="image-top-left">
+    </header>
+    <nav class="bg-secondary py-2">
+        <div class="container">
+            <a href="/" class="btn {% if page == 'home' %}btn-success{% else %}btn-outline-secondary{% endif %}">Home</a>
+            <a href="/contratos" class="btn {% if page == 'contratos' %}btn-success{% else %}btn-outline-secondary{% endif %}">Contratos</a>
+            <a href="/vendedores" class="btn {% if page == 'vendedores' %}btn-success{% else %}btn-outline-secondary{% endif %}">Vendedores</a>
+            <a href="/clientes" class="btn {% if page == 'clientes' %}btn-success{% else %}btn-outline-secondary{% endif %}">Clientes</a>
+            <a href="/pais" class="btn {% if page == 'pais' %}btn-success{% else %}btn-outline-secondary{% endif %}">Países</a>
+            <a href="/perguntas" class="btn {% if page == 'perguntas' %}btn-success{% else %}btn-outline-secondary{% endif %}">Perguntas</a>
+        </div>
+    </nav>
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="bg-dark text-white text-center py-3">
+        <p>
+            <span>Bernardo Soares</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+            <span>Miguel Costa</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+            &copy; 2024 Plataforma de Contratação Pública 
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>Ana Silva</span> 
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>Sofia Pereira</span>
+        </p>
+        <p>LIACD - Análise de Dados e Sistemas de Informação</p>
+    </footer>  
+</body>
+</html>

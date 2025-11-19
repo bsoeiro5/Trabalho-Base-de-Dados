@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container my-4">
+    <h1 class="mb-4">Países Registados</h1>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Designação do País</th>
+                    <th>Nº de Distritos/Regiões</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pais %}
+                <tr>
+                    <td>
+                        {% if p.idPais == 1 %}
+                            <a href="/pais/{{ p.idPais }}/" class="text-decoration-none">{{ p.idPais }}</a>
+                        {% else %}
+                            <a href="/pais/distritos/municipios/{{ p.idMun }}/" class="text-decoration-none">{{ p.idPais }}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.nome }}</td>
+                    <td>{{ p.n_distritos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

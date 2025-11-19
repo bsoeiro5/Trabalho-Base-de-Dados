@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <h2>{{ contrato.objetoContrato }}</h2>
+    <h3 class="text-muted">ID: {{ contrato.idContrato }}</h3>
+
+    {% for c in informacao %}
+    <div class="table-responsive mt-4">
+        <table class="table table-bordered table-light table-striped">
+            <tbody>
+                <tr>
+                    <th>Valor Contratual (€)</th>
+                    <td>{{ c.precoContratual }}</td>
+                </tr>
+                <tr>
+                    <th>Duração (dias)</th>
+                    <td>{{ c.prazoExecucao }}</td>
+                </tr>
+                <tr>
+                    <th>Proc. Centralizado</th>
+                    <td>{{ c.centralizado }}</td>
+                </tr>
+                <tr>
+                    <th>Justificação Legal</th>
+                    <td>{{ c.fundamentacao }}</td>
+                </tr>
+                <tr>
+                    <th>Fornecedor (Adjudicatário)</th>
+                    <td>
+                        <a href="/vendedores/{{ c.idVendedor }}/" class="text-decoration-none">{{ c.vendedor }}</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Cliente (Adjudicante)</th>
+                    <td>
+                        <a href="/clientes/{{ c.idCliente }}/" class="text-decoration-none">{{ c.cliente }}</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Local de Execução</th>
+                    <td>
+                        {% if c.pais == c.distrito and c.distrito == c.municipio %}
+                            <a href="/pais/distritos/municipios/{{ c.idMun }}/" class="text-decoration-none">{{ c.municipio }}</a>
+                        {% else %}
+                            <a href="/pais/{{ c.idPais }}/" class="text-decoration-none">{{ c.pais }}</a>, 
+                            <a href="/pais/distritos/{{ c.idDist }}/" class="text-decoration-none">{{ c.distrito }}</a>, 
+                            <a href="/pais/distritos/municipios/{{ c.idMun }}/" class="text-decoration-none">{{ c.municipio }}</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Acordo Quadro</th>
+                    <td>{{ c.acordo }}</td>
+                </tr>
+                <tr>
+                    <th>Procedimento</th>
+                    <td>{{ c.tp }}</td>
+                </tr>
+                <tr>
+                    <th>Tipo Contrato</th>
+                    <td>{{ c.tc }}</td>
+                </tr>
+                <tr>
+                    <th>Código CPV</th>
+                    <td>{{ c.cpv }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}
