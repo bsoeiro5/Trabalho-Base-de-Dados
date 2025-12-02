@@ -18,7 +18,7 @@ def pagina_inicial():
         JOIN
             (SELECT COUNT(*) AS total_clientes FROM Cliente)
     ''').fetchone()
-    return render_template('index.html', estatisticas=stats, pagina='home')
+    return render_template('index.html', stats=stats, pagina='home')
 
 
 # Rotas de contratos
