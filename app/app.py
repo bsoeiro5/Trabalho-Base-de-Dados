@@ -236,5 +236,4 @@ def detalhes_municipio(mid):
 
 
 if __name__ == "__main__":
-    db.connect()
     app.run(debug=True)
