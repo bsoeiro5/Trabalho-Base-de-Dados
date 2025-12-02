@@ -12,11 +12,11 @@ app = Flask(__name__)
 def pagina_inicial():
     stats = db.execute('''
         SELECT * FROM
-            (SELECT COUNT(*) AS total_contratos FROM Contrato)
+            (SELECT COUNT(*) AS n_contratos FROM Contrato)
         JOIN
-            (SELECT COUNT(*) AS total_vendedores FROM Vendedor)
+            (SELECT COUNT(*) AS n_vendedores FROM Vendedor)
         JOIN
-            (SELECT COUNT(*) AS total_clientes FROM Cliente)
+            (SELECT COUNT(*) AS n_clientes FROM Cliente)
     ''').fetchone()
     return render_template('index.html', stats=stats, pagina='home')
 
