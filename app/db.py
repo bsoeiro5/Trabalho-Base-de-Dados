@@ -1,29 +1,39 @@
 import logging
 import sqlite3
 import re
+import os
+from flask import g # Importacao crucial para o contexto
 
-global DB, DB_FILE
+# Mantem o teu caminho absoluto, agora corrigido
+DB_FILE = '/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/BaseDados.db' 
 
-DB_FILE = '/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/BaseDados.db'
+def get_db():
+    if 'db' not in g:
+        # Abre a ligacao UMA VEZ por pedido do Flask
+        if not os.path.exists(DB_FILE):
+             logging.error(f"Ficheiro de Base de Dados nao encontrado em: {DB_FILE}")
+             
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        g.db = conn 
+        logging.info('Connected to database (via g)')
+    
+    return g.db
 
-DB = dict()
+def execute(sql, args=None):
+    # Obtem a ligacao e um cursor para este pedido
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    sql = re.sub(r'\s+', ' ', sql)
+    logging.info('SQL: {} Args: {}'.format(sql, args))
+    
+    return cursor.execute(sql, args) if args is not None else cursor.execute(sql)
 
-def connect():
-  global DB, DB_FILE
-  c = sqlite3.connect(DB_FILE, check_same_thread=False)
-  print("connected", c)
-  c.row_factory = sqlite3.Row
-  DB['conn'] = c
-  DB['cursor'] = c.cursor()
-  logging.info('Connected to database')
-
-def execute(sql,args=None):
-  global DB
-  sql = re.sub(r'\s+',' ', sql)
-  logging.info('SQL: {} Args: {}'.format(sql,args))
-  return DB['cursor'].execute(sql, args) \
-      if args != None else DB['cursor'].execute(sql)
-
-def close():
-  global DB
-  DB['conn'].close()
+def close_db(e=None):
+    # Fecha a ligacao no fim do pedido
+    db = g.pop('db', None) 
+    
+    if db is not None:
+        db.close()
+        logging.info('Closed database connection (via g)')
