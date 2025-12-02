@@ -4,7 +4,7 @@ import re
 
 global DB, DB_FILE
 
-DB_FILE = 'BaseDados.db'
+DB_FILE = '/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/BaseDados.db'
 
 DB = dict()
 
