@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes do Vendedor{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{{ vendedor.designacao }}</h1>
+    <h3 class="text-muted">NIF/NIPC: {{ vendedor.numFiscal }}</h3>
+    <p>ID Vendedor: {{ vendedor.idVendedor }}</p>
+
+    <hr class="my-4">
+
+    <h2 class="mb-3">Contratos Atribuídos ({{ contratos|length }})</h2>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>ID Contrato</th>
+                    <th>Objeto</th>
+                    <th>Publicação</th>
+                    <th>Celebração</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contratos %}
+                <tr>
+                    <td>
+                        <a href="/contratos/{{ c.idContrato }}/" class="text-decoration-none">{{ c.idContrato }}</a>
+                    </td>
+                    <td>{{ c.objetoContrato }}</td>
+                    <td>{{ c.dataPublicacao }}</td>
+                    <td>{{ c.dataCelebracao }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">Não foram encontrados contratos para este fornecedor.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <a href="/vendedores/" class="btn btn-secondary mt-3">Voltar à Lista de Vendedores</a>
+</div>
+{% endblock %}

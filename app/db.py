@@ -5,7 +5,7 @@ import os
 from flask import g # Importacao crucial para o contexto
 
 # Mantem o teu caminho absoluto, agora corrigido
-DB_FILE = '/Users/rodri/Documents/GitHub/Trabalho-Base-de-Dados/BaseDados.db' 
+DB_FILE = '/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/BaseDados.db' 
 
 def get_db():
     if 'db' not in g:

@@ -163,14 +163,14 @@ def detalhes_cliente(cid):
 # Rotas de países
 @app.route('/pais/')
 def listar_paises():
-    paises = db.execute('''
+    pais_lista = db.execute('''
         SELECT p.idPais, p.nome, COUNT(d.idDist) AS n_distritos
         FROM Pais p
-        JOIN Distrito d ON d.idPais=p.idPais
+        LEFT JOIN Distrito d ON d.idPais=p.idPais
         GROUP BY p.idPais
         ORDER BY p.idPais
     ''').fetchall()
-    return render_template('listar_pais.html', paises=paises, pagina='pais')
+    return render_template('listar_pais.html', pais=pais_lista, pagina='pais')
 
 
 @app.route('/pais/<int:pid>/')
