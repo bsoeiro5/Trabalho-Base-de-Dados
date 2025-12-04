@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Questão{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">Resultado da Interrogação SQL</h1>
+ 
+    {% if resposta %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        {% for key in resposta[0].keys() %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in resposta %}
+                    <tr>
+                        {% for value in row %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="alert alert-warning">A interrogação SQL não devolveu resultados.</p>
+    {% endif %}
+    
+    <a href="/perguntas" class="btn btn-secondary mt-4">Voltar à Lista de Questões</a>
+</div>
+{% endblock %}

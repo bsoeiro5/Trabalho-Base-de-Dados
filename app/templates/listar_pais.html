@@ -17,13 +17,7 @@
             <tbody>
                 {% for p in pais %}
                 <tr>
-                    <td>
-                        {% if p.idPais == 1 %}
-                            <a href="/pais/{{ p.idPais }}/" class="text-decoration-none">{{ p.idPais }}</a>
-                        {% else %}
-                            <a href="/pais/distritos/municipios/{{ p.idMun }}/" class="text-decoration-none">{{ p.idPais }}</a>
-                        {% endif %}
-                    </td>
+                    <td>{{ p.idPais }}</td>
                     <td>{{ p.nome }}</td>
                     <td>{{ p.n_distritos }}</td>
                 </tr>

@@ -63,7 +63,8 @@ def detalhes_contrato(cid):
         JOIN Distrito d ON m.idDist=d.idDist
         JOIN Pais p ON d.idPais=p.idPais
         JOIN TipoProcedimento tp ON c.idTipoProc=tp.idTipoProc
-        JOIN TipoContrato tc ON c.idContrato=tc.idContrato
+        JOIN Tipo t ON t.idContrato=c.idContrato 
+        JOIN TipoContrato tc ON tc.idTipoCont=t.idTipoCont 
         JOIN AcordoQuadro ac ON ac.idAcordo=c.idAcordo
         JOIN CP cp ON cp.idContrato=c.idContrato
         JOIN CPV cpv ON cpv.idCPV=cp.idCPV
@@ -71,6 +72,8 @@ def detalhes_contrato(cid):
         ORDER BY c.idContrato
     ''', [cid]).fetchall()
 
+    contrato = db.execute('SELECT idContrato, dataPublicacao, dataCelebracao, objetoContrato FROM Contrato WHERE idContrato=?', [cid]).fetchone()
+    
     return render_template('contrato.html', contrato=contrato, detalhes=detalhes, pagina='contratos')
 
 
@@ -234,6 +237,163 @@ def detalhes_municipio(mid):
     bandeira = url_for('static', filename=f'bandeiras/{municipio["pais"].replace(" ", "_")}.jpg')
     return render_template('municipio.html', municipio=municipio, contratos=contratos, pagina='pais', caminho_imagem=bandeira)
 
+
+@app.route('/perguntas/')
+def listar_perguntas():
+    return render_template('listar_perguntas.html',page = 'perguntas')
+
+
+@app.route('/perguntas/1')
+def pergunta_1():
+    resposta = db.execute('''
+        SELECT COUNT(idContrato) AS TotalContratos, ROUND(AVG(precoContratual), 2) AS PrecoMedioContrato
+        FROM Contrato;
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/2')
+def pergunta_2():
+    resposta = db.execute('''
+        SELECT COUNT(idContrato) AS ContratosMaisDeUmAno
+        FROM Contrato
+        WHERE prazoExecucao > 365; 
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/3')
+def pergunta_3():
+    resposta = db.execute('''
+        SELECT COUNT(Contrato.idContrato) AS 'Número de Contratos Centralizados'
+        FROM Contrato
+        WHERE Contrato.centralizado='Sim'; 
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/4')
+def pergunta_4():
+    resposta = db.execute('''
+        SELECT TipoProcedimento.descricao AS TipoProcedimento, COUNT(Contrato.idContrato) AS Quantidade
+        FROM TipoProcedimento
+        JOIN Contrato ON Contrato.idTipoProc = TipoProcedimento.idTipoProc
+        GROUP BY TipoProcedimento.descricao
+        ORDER BY Quantidade DESC; 
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/5')
+def pergunta_5():
+    resposta = db.execute('''
+        SELECT Cliente.designacao AS Cliente, Contrato.objetoContrato AS Objeto, Contrato.precoContratual AS ValorContrato
+        FROM Contrato
+        JOIN Cliente ON Contrato.idCliente = Cliente.idCliente
+        ORDER BY Contrato.precoContratual DESC
+        LIMIT 1;
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/6')
+def pergunta_6():
+    # Nota: Usei a query da pergunta 8 da tua lista original, que é mais complexa que a 6
+    resposta = db.execute('''
+        SELECT Municipio.nome AS Municipio, COUNT(Contrato.idContrato) AS NumContratos
+        FROM Municipio
+        JOIN Local ON Municipio.idMun = Local.idMun
+        JOIN Contrato ON Local.idContrato = Contrato.idContrato
+        GROUP BY Municipio.nome
+        HAVING NumContratos > 100
+        ORDER BY NumContratos DESC;  
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/7')
+def pergunta_7():
+    resposta = db.execute('''
+        SELECT Contrato.idContrato, Contrato.objetoContrato, Contrato.precoContratual
+        FROM Contrato
+        JOIN CP ON Contrato.idContrato = CP.idContrato
+        JOIN CPV ON CP.idCPV = CPV.idCPV
+        WHERE CPV.descricao LIKE '%bases de dados%'
+        ORDER BY Contrato.idContrato;
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/8')
+def pergunta_8():
+    # Nota: A tua pergunta 8 repetia a 6. Assumi que querias a 7 original.
+    # Usando a 6 original (TOP 5 Vendedores) para não repetir queries
+    resposta = db.execute('''
+        SELECT Vendedor.designacao AS Vendedor, Vendedor.numFiscal AS NIF, ROUND(SUM(Contrato.precoContratual), 2) AS ValorTotal
+        FROM Vendedor
+        JOIN ContratoVendedor ON Vendedor.idVendedor = ContratoVendedor.idVendedor
+        JOIN Contrato ON ContratoVendedor.idContrato = Contrato.idContrato
+        GROUP BY Vendedor.designacao, Vendedor.numFiscal
+        ORDER BY ValorTotal DESC
+        LIMIT 5;
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/9')
+def pergunta_9():
+    resposta = db.execute('''
+        SELECT Distrito.nome AS Distrito, ROUND(SUM(Contrato.precoContratual), 2) AS ValorTotalGasto
+        FROM Distrito
+        JOIN Municipio ON Distrito.idDist = Municipio.idDist
+        JOIN Local ON Municipio.idMun = Local.idMun
+        JOIN Contrato ON Local.idContrato = Contrato.idContrato
+        WHERE Distrito.idPais = 1
+        GROUP BY Distrito.nome
+        ORDER BY ValorTotalGasto DESC;  
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/10')
+def pergunta_10():
+    resposta = db.execute('''
+        SELECT DISTINCT Cliente.designacao AS Cliente, Cliente.nif AS NIF_Cliente
+        FROM Cliente
+        JOIN Contrato ON Contrato.idCliente = Cliente.idCliente
+        JOIN ContratoVendedor ON ContratoVendedor.idContrato = Contrato.idContrato
+        JOIN Vendedor ON ContratoVendedor.idVendedor = Vendedor.idVendedor
+        WHERE Vendedor.numFiscal NOT LIKE '5%' OR Vendedor.numFiscal IS NULL;  
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/11')
+def pergunta_11():
+    resposta = db.execute('''
+        SELECT TipoProcedimento.descricao as 'Tipo de Procedimento', round(AVG(Contrato.precoContratual),2) AS 'Média do Valor do Contrato'
+        FROM Contrato
+        JOIN TipoProcedimento ON Contrato.idTipoProc = TipoProcedimento.idTipoProc
+        GROUP BY TipoProcedimento.descricao
+        ORDER BY AVG(Contrato.precoContratual) DESC;
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+@app.route('/perguntas/12')
+def pergunta_12():
+    resposta = db.execute('''
+        SELECT Municipio.nome AS Municipio, ROUND(AVG(Contrato.precoContratual), 2) AS PrecoMedioContrato
+        FROM Municipio
+        JOIN Local ON Municipio.idMun = Local.idMun
+        JOIN Contrato ON Local.idContrato = Contrato.idContrato
+        JOIN Distrito ON Municipio.idDist = Distrito.idDist
+        WHERE Distrito.idPais = 1
+        GROUP BY Municipio.nome
+        ORDER BY PrecoMedioContrato DESC;
+    ''').fetchall()
+    
+    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
 
 if __name__ == "__main__":
     app.run(debug=True)
