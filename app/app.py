@@ -245,35 +245,62 @@ def listar_perguntas():
 
 @app.route('/perguntas/1')
 def pergunta_1():
+
+    texto_da_pergunta = "Qual o número total de contratos e o preço médio contratual?"
+
     resposta = db.execute('''
         SELECT COUNT(idContrato) AS TotalContratos, ROUND(AVG(precoContratual), 2) AS PrecoMedioContrato
         FROM Contrato;
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html', 
+        resposta=resposta, 
+        page='perguntas', 
+        pergunta=texto_da_pergunta 
+    )
 
 @app.route('/perguntas/2')
 def pergunta_2():
+   
+    texto_da_pergunta = "Quantos contratos têm um prazo de execução superior a um ano?"
+
     resposta = db.execute('''
         SELECT COUNT(idContrato) AS ContratosMaisDeUmAno
         FROM Contrato
         WHERE prazoExecucao > 365; 
     ''').fetchall()
-    
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+
+    return render_template(
+        'detalhes_pergunta.html', 
+        resposta=resposta, 
+        page='perguntas', 
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/3')
 def pergunta_3():
+
+    texto_da_pergunta = "Quantos contratos estão identificados como centralizados?"
+
     resposta = db.execute('''
         SELECT COUNT(Contrato.idContrato) AS 'Número de Contratos Centralizados'
         FROM Contrato
         WHERE Contrato.centralizado='Sim'; 
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/4')
 def pergunta_4():
+
+    texto_da_pergunta = "Qual é a quantidade de contratos por tipo de procedimento, ordenada do mais frequente para o menos frequente?"
+
     resposta = db.execute('''
         SELECT TipoProcedimento.descricao AS TipoProcedimento, COUNT(Contrato.idContrato) AS Quantidade
         FROM TipoProcedimento
@@ -282,10 +309,18 @@ def pergunta_4():
         ORDER BY Quantidade DESC; 
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/5')
 def pergunta_5():
+
+    texto_da_pergunta = "Qual é o contrato com o maior preço contratual, incluindo o cliente e o objeto associado?"
+
     resposta = db.execute('''
         SELECT Cliente.designacao AS Cliente, Contrato.objetoContrato AS Objeto, Contrato.precoContratual AS ValorContrato
         FROM Contrato
@@ -294,11 +329,18 @@ def pergunta_5():
         LIMIT 1;
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/6')
 def pergunta_6():
-    # Nota: Usei a query da pergunta 8 da tua lista original, que é mais complexa que a 6
+
+    texto_da_pergunta = "Quais são os municípios que têm mais de 100 contratos associados e quantos contratos têm cada um?"
+
     resposta = db.execute('''
         SELECT Municipio.nome AS Municipio, COUNT(Contrato.idContrato) AS NumContratos
         FROM Municipio
@@ -309,10 +351,18 @@ def pergunta_6():
         ORDER BY NumContratos DESC;  
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/7')
 def pergunta_7():
+
+    texto_da_pergunta = "Quais são os contratos associados a códigos CPV cuja descrição contém a expressão 'bases de dados'?"
+
     resposta = db.execute('''
         SELECT Contrato.idContrato, Contrato.objetoContrato, Contrato.precoContratual
         FROM Contrato
@@ -322,12 +372,18 @@ def pergunta_7():
         ORDER BY Contrato.idContrato;
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/8')
 def pergunta_8():
-    # Nota: A tua pergunta 8 repetia a 6. Assumi que querias a 7 original.
-    # Usando a 6 original (TOP 5 Vendedores) para não repetir queries
+
+    texto_da_pergunta = "Quais são os cinco vendedores com o maior valor total de contratos, considerando a soma dos preços contratuais?"
+
     resposta = db.execute('''
         SELECT Vendedor.designacao AS Vendedor, Vendedor.numFiscal AS NIF, ROUND(SUM(Contrato.precoContratual), 2) AS ValorTotal
         FROM Vendedor
@@ -338,10 +394,18 @@ def pergunta_8():
         LIMIT 5;
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/9')
 def pergunta_9():
+
+    texto_da_pergunta = "Quais são os distritos (do país com ID 1) cujo valor total gasto em contratos ultrapassa 35 milhões?"
+
     resposta = db.execute('''
         SELECT Distrito.nome AS Distrito, ROUND(SUM(Contrato.precoContratual), 2) AS ValorTotalGasto
         FROM Distrito
@@ -353,10 +417,18 @@ def pergunta_9():
         ORDER BY ValorTotalGasto DESC;  
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/10')
 def pergunta_10():
+
+    texto_da_pergunta = "Quais são os clientes que possuem contratos com vendedores cujo NIF não começa por '5' ou que não têm NIF registado?"
+
     resposta = db.execute('''
         SELECT DISTINCT Cliente.designacao AS Cliente, Cliente.nif AS NIF_Cliente
         FROM Cliente
@@ -366,10 +438,18 @@ def pergunta_10():
         WHERE Vendedor.numFiscal NOT LIKE '5%' OR Vendedor.numFiscal IS NULL;  
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/11')
 def pergunta_11():
+
+    texto_da_pergunta = "Qual é o valor médio dos contratos para cada tipo de procedimento, ordenado do maior para o menor?"
+
     resposta = db.execute('''
         SELECT TipoProcedimento.descricao as 'Tipo de Procedimento', round(AVG(Contrato.precoContratual),2) AS 'Média do Valor do Contrato'
         FROM Contrato
@@ -378,10 +458,18 @@ def pergunta_11():
         ORDER BY AVG(Contrato.precoContratual) DESC;
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 @app.route('/perguntas/12')
 def pergunta_12():
+
+    texto_da_pergunta = "Qual é o preço médio dos contratos por município, considerando apenas municípios pertencentes ao país com ID 1?"
+
     resposta = db.execute('''
         SELECT Municipio.nome AS Municipio, ROUND(AVG(Contrato.precoContratual), 2) AS PrecoMedioContrato
         FROM Municipio
@@ -393,7 +481,12 @@ def pergunta_12():
         ORDER BY PrecoMedioContrato DESC;
     ''').fetchall()
     
-    return render_template('detalhes_pergunta.html', resposta=resposta,page = 'perguntas')
+    return render_template(
+        'detalhes_pergunta.html',
+        resposta=resposta,
+        page = 'perguntas',
+        pergunta=texto_da_pergunta
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
