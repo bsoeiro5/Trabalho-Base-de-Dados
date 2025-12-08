@@ -2,14 +2,12 @@ import logging
 import sqlite3
 import re
 import os
-from flask import g # Importacao crucial para o contexto
+from flask import g
 
-# Mantem o teu caminho absoluto, agora corrigido
-DB_FILE = '/Users/rodri/Documents/GitHub/Trabalho-Base-de-Dados/PovoamentoBD/BaseDados.db' 
+DB_FILE = '/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/BaseDados.db' 
 
 def get_db():
     if 'db' not in g:
-        # Abre a ligacao UMA VEZ por pedido do Flask
         if not os.path.exists(DB_FILE):
              logging.error(f"Ficheiro de Base de Dados nao encontrado em: {DB_FILE}")
              

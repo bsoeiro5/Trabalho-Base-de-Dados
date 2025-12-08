@@ -78,9 +78,9 @@ def detalhes_contrato(cid):
 
 
 # Rotas de vendedores
-@app.route('/vendedores/')
-def listar_todos_vendedores():
-    vendedores = db.execute('''
+@app.route('/adjudicatarios/')
+def listar_todos_adjudicatarios():
+    adjudicatarios = db.execute('''
         SELECT v.idVendedor, v.designacao, v.numFiscal, COUNT(cv.idVendedor) AS total_contratos
         FROM Vendedor v
         JOIN ContratoVendedor cv ON v.idVendedor=cv.idVendedor
@@ -94,22 +94,23 @@ def listar_todos_vendedores():
     if vid:
         vendedor = db.execute('SELECT idVendedor, designacao FROM Vendedor WHERE idVendedor=?', [vid]).fetchone()
         if vendedor:
-            return redirect(f"/vendedores/{vendedor['idVendedor']}/")
+            return redirect(f"/adjudicatarios/{vendedor['idVendedor']}/")
         else:
-            return render_template('listar_vendedores.html', vendedores=vendedores, pagina='vendedores', erro="Vendedor não encontrado")
+            return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios', erro="Adjudicatário não encontrado")
+    
     if vnome:
         vendedor = db.execute('SELECT idVendedor, designacao FROM Vendedor WHERE designacao=?', [vnome]).fetchone()
         if vendedor:
-            return redirect(f"/vendedores/{vendedor['idVendedor']}/")
+            return redirect(f"/adjudicatarios/{vendedor['idVendedor']}/")
         else:
-            return render_template('listar_vendedores.html', vendedores=vendedores, pagina='vendedores', erro="Vendedor não encontrado")
+            return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios', erro="Adjudicatário não encontrado")
 
-    return render_template('listar_vendedores.html', vendedores=vendedores, pagina='vendedores')
+    return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios')
 
 
-@app.route('/vendedores/<int:vid>/')
-def detalhes_vendedor(vid):
-    vendedor = db.execute('SELECT idVendedor, designacao FROM Vendedor WHERE idVendedor=?', [vid]).fetchone()
+@app.route('/adjudicatarios/<int:vid>/')
+def detalhes_adjudicatario(vid):
+    vendedor = db.execute('SELECT idVendedor, designacao, numFiscal FROM Vendedor WHERE idVendedor=?', [vid]).fetchone()
     contratos = db.execute('''
         SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
         FROM Contrato c
@@ -117,13 +118,12 @@ def detalhes_vendedor(vid):
         WHERE cv.idVendedor=?
         ORDER BY c.idContrato
     ''', [vid]).fetchall()
-    return render_template('vendedor.html', vendedor=vendedor, contratos=contratos, pagina='vendedores')
+    return render_template('adjudicatario.html', adjudicatario=vendedor, contratos=contratos, pagina='adjudicatarios')
 
 
-# Rotas de clientes
-@app.route('/clientes/')
-def listar_todos_clientes():
-    clientes = db.execute('''
+@app.route('/adjudicantes/')
+def listar_todos_adjudicantes():
+    adjudicantes = db.execute('''
         SELECT cl.idCliente, cl.designacao, cl.nif, COUNT(c.idContrato) AS total_contratos
         FROM Cliente cl
         JOIN Contrato c ON cl.idCliente=c.idCliente
@@ -137,22 +137,23 @@ def listar_todos_clientes():
     if cid:
         cliente = db.execute('SELECT idCliente, designacao FROM Cliente WHERE idCliente=?', [cid]).fetchone()
         if cliente:
-            return redirect(f"/clientes/{cliente['idCliente']}/")
+            return redirect(f"/adjudicantes/{cliente['idCliente']}/")
         else:
-            return render_template('listar_clientes.html', clientes=clientes, pagina='clientes', erro="Cliente não encontrado")
+            return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes', erro="Adjudicante não encontrado")
+    
     if cnome:
         cliente = db.execute('SELECT idCliente, designacao FROM Cliente WHERE designacao=?', [cnome]).fetchone()
         if cliente:
-            return redirect(f"/clientes/{cliente['idCliente']}/")
+            return redirect(f"/adjudicantes/{cliente['idCliente']}/")
         else:
-            return render_template('listar_clientes.html', clientes=clientes, pagina='clientes', erro="Cliente não encontrado")
+            return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes', erro="Adjudicante não encontrado")
 
-    return render_template('listar_clientes.html', clientes=clientes, pagina='clientes')
+    return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes')
 
 
-@app.route('/clientes/<int:cid>/')
-def detalhes_cliente(cid):
-    cliente = db.execute('SELECT idCliente, designacao FROM Cliente WHERE idCliente=?', [cid]).fetchone()
+@app.route('/adjudicantes/<int:cid>/')
+def detalhes_adjudicante(cid):
+    cliente = db.execute('SELECT idCliente, designacao, nif FROM Cliente WHERE idCliente=?', [cid]).fetchone()
     contratos = db.execute('''
         SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
         FROM Contrato c
@@ -160,8 +161,7 @@ def detalhes_cliente(cid):
         WHERE cl.idCliente=?
         ORDER BY c.idContrato
     ''', [cid]).fetchall()
-    return render_template('cliente.html', cliente=cliente, contratos=contratos, pagina='clientes')
-
+    return render_template('adjudicante.html', adjudicante=cliente, contratos=contratos, pagina='adjudicantes')
 
 # Rotas de países
 @app.route('/pais/')
@@ -414,6 +414,7 @@ def pergunta_9():
         JOIN Contrato ON Local.idContrato = Contrato.idContrato
         WHERE Distrito.idPais = 1
         GROUP BY Distrito.nome
+        HAVING ValorTotalGasto > 35000000
         ORDER BY ValorTotalGasto DESC;  
     ''').fetchall()
     

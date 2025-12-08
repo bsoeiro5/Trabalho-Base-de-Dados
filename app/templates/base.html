@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
-        /* ===== Corpo e fontes ===== */
         body {
             font-family: "Segoe UI", Arial, sans-serif;
             background-color: #f4f4f9;
@@ -45,14 +44,6 @@
             width: 180px;
         }
 
-        header img.image-top-left {
-            position: absolute;
-            top: 5px;
-            left: 30px;
-            width: 100px;
-        }
-
-        /* ===== Menu ===== */
         nav {
             background-color: #567ebc;
             padding: 10px 0;
@@ -132,14 +123,13 @@
     <header>
         <h1>Análise de Plataforma de Contratação Pública (2024)</h1>
         <img src="/static/simboloFcup.png" class="image-top-right" alt="FCUP">
-        <img src="/static/simboloPortugal.jpg" class="image-top-left" alt="Símbolo Portugal">
     </header>
 
     <nav>
         <a href="/" class="btn {% if page == 'home' %}btn-success{% else %}btn-outline-secondary{% endif %}">Home</a>
         <a href="/contratos" class="btn {% if page == 'contratos' %}btn-success{% else %}btn-outline-secondary{% endif %}">Contratos</a>
-        <a href="/vendedores" class="btn {% if page == 'vendedores' %}btn-success{% else %}btn-outline-secondary{% endif %}">Adjudicatários</a>
-        <a href="/clientes" class="btn {% if page == 'clientes' %}btn-success{% else %}btn-outline-secondary{% endif %}">Adjudicantes</a>
+        <a href="/adjudicatarios" class="btn {% if page == 'adjudicatarios' %}btn-success{% else %}btn-outline-secondary{% endif %}">Adjudicatários</a>
+        <a href="/adjudicantes" class="btn {% if page == 'adjudicantes' %}btn-success{% else %}btn-outline-secondary{% endif %}">Adjudicantes</a>
         <a href="/pais" class="btn {% if page == 'pais' %}btn-success{% else %}btn-outline-secondary{% endif %}">Países</a>
         <a href="/perguntas" class="btn {% if page == 'perguntas' %}btn-success{% else %}btn-outline-secondary{% endif %}">Perguntas</a>
     </nav>
@@ -151,10 +141,10 @@
     <footer>
         <p>
             <span>Bernardo Soeiro</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span>Marco Almeida</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span>Marco Almeida</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span>Rodrigo Dias</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             &copy; Contratos Públicos 2024
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span>Rodrigo Dias</span>
         </p>
         <p>L.IACD/L.CC - Bases de Dados</p>
     </footer>

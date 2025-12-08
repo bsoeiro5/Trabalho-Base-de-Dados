@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Detalhes do Vendedor{% endblock %}
+{% block title %}Detalhes do Adjudicatário{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-4">{{ vendedor.designacao }}</h1>
-    <h3 class="text-muted">NIF/NIPC: {{ vendedor.numFiscal }}</h3>
-    <p>ID Vendedor: {{ vendedor.idVendedor }}</p>
+    <h1 class="mb-4">Adjudicatário: {{ adjudicatario.designacao }}</h1>
+    <h3 class="text-muted">NIF/NIPC: {{ adjudicatario.numFiscal }}</h3>
+    <p>ID Adjudicatário: {{ adjudicatario.idVendedor }}</p>
 
     <hr class="my-4">
 
@@ -34,13 +34,13 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">Não foram encontrados contratos para este fornecedor.</td>
+                    <td colspan="4">Não foram encontrados contratos para este adjudicatário.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     
-    <a href="/vendedores/" class="btn btn-secondary mt-3">Voltar à Lista de Vendedores</a>
+    <a href="/adjudicatarios/" class="btn btn-secondary mt-3">Voltar à Lista de Adjudicatários</a>
 </div>
 {% endblock %}
