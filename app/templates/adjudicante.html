@@ -1,46 +1,43 @@
-{% extends 'base.html' %}
+{% extends 'layout.html' %}
 
 {% block content %}
+<h2>Detalhes do Adjudicante</h2>
 
-<div class="container my-4">
-    <h1 class="mb-4">Adjudicante: {{ adjudicante.designacao }}</h1>
-    <h3 class="text-muted">NIF/NIPC: {{ adjudicante.nif }}</h3>
-    <p>ID Adjudicante: {{ adjudicante.idCliente }}</p>
-
-    <hr class="my-4">
-
-    <h2 class="mb-3">Contratos Celebrados ({{ contratos|length }})</h2>
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Objeto do Contrato</th>
-                    <th>Publicação</th>
-                    <th>Celebração</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for c in contratos %}
-                <tr>
-                    <td class="text-center">
-                        <a href="/contratos/{{ c.idContrato }}/" class="text-decoration-none">{{ c.idContrato }}</a>
-                    </td>
-                    <td>{{ c.objetoContrato }}</td>
-                    <td class="text-center">{{ c.dataPublicacao }}</td>
-                    <td class="text-center">{{ c.dataCelebracao }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center">Não foram encontrados contratos para este adjudicante.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">{{ adjudicante.designacao }}</h5>
+        <p class="card-text"><strong>ID:</strong> {{ adjudicante.idAdjudicante }}</p>
+        <p class="card-text"><strong>NIF:</strong> {{ adjudicante.nif }}</p>
     </div>
-    
-    <a href="/adjudicantes/" class="btn btn-secondary mt-3">Voltar à Lista de Adjudicantes</a>
 </div>
 
+<h3>Contratos Associados</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID Contrato</th>
+            <th>Objeto</th>
+            <th>Data Publicação</th>
+            <th>Data Celebração</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in contratos %}
+        <tr>
+            <td>{{ c.idContrato }}</td>
+            <td>{{ c.objetoContrato }}</td>
+            <td>{{ c.dataPublicacao }}</td>
+            <td>{{ c.dataCelebracao }}</td>
+            <td><a href="/contratos/{{ c.idContrato }}/" class="btn btn-sm btn-primary">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">Sem contratos registados.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="/adjudicantes/" class="btn btn-secondary mt-3">Voltar à lista</a>
 {% endblock %}

@@ -37,14 +37,14 @@ CREATE TABLE TipoProcedimento(
     descricao VARCHAR2(255)
 );
 
-CREATE TABLE Cliente(
-    idCliente INTEGER PRIMARY KEY,
+CREATE TABLE Adjudicante(
+    idAdjudicante INTEGER PRIMARY KEY,
     nif INTEGER,
     designacao VARCHAR2(255)
 );
 
-CREATE TABLE Vendedor(
-    idVendedor INTEGER PRIMARY KEY,
+CREATE TABLE Adjudicatario(
+    idAdjudicatario INTEGER PRIMARY KEY,
     numFiscal TEXT,
     designacao VARCHAR2(255)
 );
@@ -60,18 +60,18 @@ CREATE TABLE Contrato (
     dataCelebracao DATE, 
     idAcordo INTEGER,
     idTipoProc INTEGER,
-    idCliente INTEGER,
-    FOREIGN KEY (idCliente) REFERENCES Cliente (idCliente),
+    idAdjudicante INTEGER,
+    FOREIGN KEY (idAdjudicante) REFERENCES Adjudicante (idAdjudicante),
     FOREIGN KEY (idAcordo) REFERENCES AcordoQuadro (idAcordo),
     FOREIGN KEY (idTipoProc) REFERENCES TipoProcedimento(idTipoProc)
 );
 
-CREATE TABLE ContratoVendedor(
+CREATE TABLE ContratoAdjudicatario(
     idContrato INTEGER,
-    idVendedor INTEGER,
-    PRIMARY KEY(idContrato,idVendedor),
+    idAdjudicatario INTEGER,
+    PRIMARY KEY(idContrato,idAdjudicatario),
     FOREIGN KEY (idContrato) REFERENCES Contrato (idContrato),
-    FOREIGN KEY (idVendedor) REFERENCES Vendedor (idVendedor)
+    FOREIGN KEY (idAdjudicatario) REFERENCES Adjudicatario (idAdjudicatario)
 );
 
 CREATE TABLE Local(

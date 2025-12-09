@@ -1,56 +1,41 @@
-{% extends 'base.html' %}
+{% extends 'layout.html' %}
 
 {% block content %}
+<h2>Adjudicantes</h2>
 
-<div class="container my-4">
-    <h1 class="mb-4">Adjudicantes</h1>
+{% if erro %}
+    <div class="alert alert-danger">{{ erro }}</div>
+{% endif %}
 
-    <form method="get" action="/adjudicantes/" class="mb-4 d-flex align-items-center">
-        <label for="clientes_id" class="form-label me-2 mb-0">Pesquisar por ID do Adjudicante:</label>
-        <input type="text" id="clientes_id" name="idCliente" class="form-control me-2 w-25" placeholder="ID do Adjudicante">
-        <button type="submit" class="btn btn-primary">Pesquisar</button>
-    </form>
+<form action="/adjudicantes/" method="get" class="form-inline mb-3">
+    <input type="number" name="idCliente" class="form-control mr-2" placeholder="ID Adjudicante">
+    <input type="text" name="nomeCliente" class="form-control mr-2" placeholder="Designação">
+    <button type="submit" class="btn btn-primary">Pesquisar</button>
+    <a href="/adjudicantes/" class="btn btn-secondary ml-2">Limpar</a>
+</form>
 
-    <form method="get" action="/adjudicantes/" class="mb-4 d-flex align-items-center">
-        <label for="clientes_nome" class="form-label me-2 mb-0">Pesquisar por Designação do Adjudicante:</label>
-        <input type="text" id="clientes_nome" name="nomeCliente" class="form-control me-2 w-25" placeholder="Designação do Adjudicante">
-        <button type="submit" class="btn btn-primary">Pesquisar</button>
-    </form>
-    
-    {% if erro %}
-    <div class="alert alert-danger" role="alert">
-        {{ erro }}
-    </div>
-    {% endif %}
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center">
-            <thead class="table-light">
-                <tr>
-                    <th class="text-center">ID</th>
-                    <th class="text-center">Designação</th>
-                    <th class="text-center">NIF/NIPC</th>
-                    <th class="text-center">Contratos Celebrados</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for c in adjudicantes %}
-                <tr>
-                    <td>
-                        <a href="/adjudicantes/{{ c.idCliente }}/" class="text-decoration-none">{{ c.idCliente }}</a>
-                    </td>
-                    <td>{{ c.designacao }}</td>
-                    <td>{{ c.nif }}</td>
-                    <td>{{ c.total_contratos }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center">Nenhum adjudicante encontrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>NIF</th>
+            <th>Designação</th>
+            <th>Total Contratos</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in adjudicantes %}
+        <tr>
+            <td>{{ a.idAdjudicante }}</td>
+            <td>{{ a.nif }}</td>
+            <td>{{ a.designacao }}</td>
+            <td>{{ a.total_contratos }}</td>
+            <td>
+                <a href="/adjudicantes/{{ a.idAdjudicante }}/" class="btn btn-sm btn-info">Detalhes</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

@@ -7,21 +7,20 @@ import db
 
 app = Flask(__name__)
 
-# Página inicial com estatísticas
+
 @app.route('/')
 def pagina_inicial():
     stats = db.execute('''
         SELECT * FROM
             (SELECT COUNT(*) AS n_contratos FROM Contrato)
         JOIN
-            (SELECT COUNT(*) AS n_vendedores FROM Vendedor)
+            (SELECT COUNT(*) AS n_adjudicatarios FROM Adjudicatario)
         JOIN
-            (SELECT COUNT(*) AS n_clientes FROM Cliente)
+            (SELECT COUNT(*) AS n_adjudicantes FROM Adjudicante)
     ''').fetchone()
     return render_template('index.html', stats=stats, pagina='home')
 
 
-# Rotas de contratos
 @app.route('/contratos/')
 def listar_contratos():
     contratos = db.execute('''
@@ -47,17 +46,17 @@ def detalhes_contrato(cid):
     detalhes = db.execute('''
         SELECT 
             c.precoContratual, c.prazoExecucao, c.centralizado, c.fundamentacao,
-            v.idVendedor, v.designacao AS vendedor,
-            cl.idCliente, cl.designacao AS cliente,
+            adj.idAdjudicatario, adj.designacao AS adjudicatario,
+            cl.idAdjudicante, cl.designacao AS adjudicante,
             m.idMun, m.nome AS municipio,
             d.idDist, d.nome AS distrito,
             p.idPais, p.nome AS pais,
             ac.descricao AS acordo, tp.descricao AS tipo_proc, cpv.descricao AS cpv,
             tc.descricao AS tipo_contrato
         FROM Contrato c
-        JOIN ContratoVendedor cv ON cv.idContrato=c.idContrato
-        JOIN Vendedor v ON cv.idVendedor=v.idVendedor
-        JOIN Cliente cl ON cl.idCliente=c.idCliente
+        JOIN ContratoAdjudicatario ca ON ca.idContrato=c.idContrato
+        JOIN Adjudicatario adj ON ca.idAdjudicatario=adj.idAdjudicatario
+        JOIN Adjudicante cl ON cl.idAdjudicante=c.idAdjudicante
         JOIN Local l ON l.idContrato=c.idContrato
         JOIN Municipio m ON l.idMun=m.idMun
         JOIN Distrito d ON m.idDist=d.idDist
@@ -77,31 +76,30 @@ def detalhes_contrato(cid):
     return render_template('contrato.html', contrato=contrato, detalhes=detalhes, pagina='contratos')
 
 
-# Rotas de vendedores
 @app.route('/adjudicatarios/')
 def listar_todos_adjudicatarios():
     adjudicatarios = db.execute('''
-        SELECT v.idVendedor, v.designacao, v.numFiscal, COUNT(cv.idVendedor) AS total_contratos
-        FROM Vendedor v
-        JOIN ContratoVendedor cv ON v.idVendedor=cv.idVendedor
-        GROUP BY v.idVendedor
-        ORDER BY v.idVendedor
+        SELECT v.idAdjudicatario, v.designacao, v.numFiscal, COUNT(cv.idAdjudicatario) AS total_contratos
+        FROM Adjudicatario v
+        JOIN ContratoAdjudicatario cv ON v.idAdjudicatario=cv.idAdjudicatario
+        GROUP BY v.idAdjudicatario
+        ORDER BY v.idAdjudicatario
     ''').fetchall()
 
     vid = request.args.get('idVendedor')
     vnome = request.args.get('nomeVendedor')
 
     if vid:
-        vendedor = db.execute('SELECT idVendedor, designacao FROM Vendedor WHERE idVendedor=?', [vid]).fetchone()
-        if vendedor:
-            return redirect(f"/adjudicatarios/{vendedor['idVendedor']}/")
+        adjudicatario = db.execute('SELECT idAdjudicatario, designacao FROM Adjudicatario WHERE idAdjudicatario=?', [vid]).fetchone()
+        if adjudicatario:
+            return redirect(f"/adjudicatarios/{adjudicatario['idAdjudicatario']}/")
         else:
             return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios', erro="Adjudicatário não encontrado")
     
     if vnome:
-        vendedor = db.execute('SELECT idVendedor, designacao FROM Vendedor WHERE designacao=?', [vnome]).fetchone()
-        if vendedor:
-            return redirect(f"/adjudicatarios/{vendedor['idVendedor']}/")
+        adjudicatario = db.execute('SELECT idAdjudicatario, designacao FROM Adjudicatario WHERE designacao=?', [vnome]).fetchone()
+        if adjudicatario:
+            return redirect(f"/adjudicatarios/{adjudicatario['idAdjudicatario']}/")
         else:
             return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios', erro="Adjudicatário não encontrado")
 
@@ -110,41 +108,41 @@ def listar_todos_adjudicatarios():
 
 @app.route('/adjudicatarios/<int:vid>/')
 def detalhes_adjudicatario(vid):
-    vendedor = db.execute('SELECT idVendedor, designacao, numFiscal FROM Vendedor WHERE idVendedor=?', [vid]).fetchone()
+    adjudicatario = db.execute('SELECT idAdjudicatario, designacao, numFiscal FROM Adjudicatario WHERE idAdjudicatario=?', [vid]).fetchone()
     contratos = db.execute('''
         SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
         FROM Contrato c
-        JOIN ContratoVendedor cv ON c.idContrato=cv.idContrato
-        WHERE cv.idVendedor=?
+        JOIN ContratoAdjudicatario cv ON c.idContrato=cv.idContrato
+        WHERE cv.idAdjudicatario=?
         ORDER BY c.idContrato
     ''', [vid]).fetchall()
-    return render_template('adjudicatario.html', adjudicatario=vendedor, contratos=contratos, pagina='adjudicatarios')
+    return render_template('adjudicatario.html', adjudicatario=adjudicatario, contratos=contratos, pagina='adjudicatarios')
 
 
 @app.route('/adjudicantes/')
 def listar_todos_adjudicantes():
     adjudicantes = db.execute('''
-        SELECT cl.idCliente, cl.designacao, cl.nif, COUNT(c.idContrato) AS total_contratos
-        FROM Cliente cl
-        JOIN Contrato c ON cl.idCliente=c.idCliente
-        GROUP BY cl.idCliente
-        ORDER BY cl.idCliente
+        SELECT cl.idAdjudicante, cl.designacao, cl.nif, COUNT(c.idContrato) AS total_contratos
+        FROM Adjudicante cl
+        JOIN Contrato c ON cl.idAdjudicante=c.idAdjudicante
+        GROUP BY cl.idAdjudicante
+        ORDER BY cl.idAdjudicante
     ''').fetchall()
 
     cid = request.args.get('idCliente')
     cnome = request.args.get('nomeCliente')
 
     if cid:
-        cliente = db.execute('SELECT idCliente, designacao FROM Cliente WHERE idCliente=?', [cid]).fetchone()
-        if cliente:
-            return redirect(f"/adjudicantes/{cliente['idCliente']}/")
+        adjudicante = db.execute('SELECT idAdjudicante, designacao FROM Adjudicante WHERE idAdjudicante=?', [cid]).fetchone()
+        if adjudicante:
+            return redirect(f"/adjudicantes/{adjudicante['idAdjudicante']}/")
         else:
             return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes', erro="Adjudicante não encontrado")
     
     if cnome:
-        cliente = db.execute('SELECT idCliente, designacao FROM Cliente WHERE designacao=?', [cnome]).fetchone()
-        if cliente:
-            return redirect(f"/adjudicantes/{cliente['idCliente']}/")
+        adjudicante = db.execute('SELECT idAdjudicante, designacao FROM Adjudicante WHERE designacao=?', [cnome]).fetchone()
+        if adjudicante:
+            return redirect(f"/adjudicantes/{adjudicante['idAdjudicante']}/")
         else:
             return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes', erro="Adjudicante não encontrado")
 
@@ -153,17 +151,17 @@ def listar_todos_adjudicantes():
 
 @app.route('/adjudicantes/<int:cid>/')
 def detalhes_adjudicante(cid):
-    cliente = db.execute('SELECT idCliente, designacao, nif FROM Cliente WHERE idCliente=?', [cid]).fetchone()
+    adjudicante = db.execute('SELECT idAdjudicante, designacao, nif FROM Adjudicante WHERE idAdjudicante=?', [cid]).fetchone()
     contratos = db.execute('''
         SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
         FROM Contrato c
-        JOIN Cliente cl ON c.idCliente=cl.idCliente
-        WHERE cl.idCliente=?
+        JOIN Adjudicante cl ON c.idAdjudicante=cl.idAdjudicante
+        WHERE cl.idAdjudicante=?
         ORDER BY c.idContrato
     ''', [cid]).fetchall()
-    return render_template('adjudicante.html', adjudicante=cliente, contratos=contratos, pagina='adjudicantes')
+    return render_template('adjudicante.html', adjudicante=adjudicante, contratos=contratos, pagina='adjudicantes')
 
-# Rotas de países
+
 @app.route('/pais/')
 def listar_paises():
     pais_lista = db.execute('''
@@ -192,7 +190,6 @@ def detalhes_pais(pid):
     return render_template('pais.html', pais=pais, distritos=distritos, pagina='pais', caminho_imagem=bandeira)
 
 
-# Rotas de distritos
 @app.route('/pais/distritos/<int:did>/')
 def detalhes_distrito(did):
     distrito = db.execute('''
@@ -215,7 +212,6 @@ def detalhes_distrito(did):
     return render_template('distrito.html', distrito=distrito, municipios=municipios, pagina='pais')
 
 
-# Rotas de municípios
 @app.route('/pais/distritos/municipios/<int:mid>/')
 def detalhes_municipio(mid):
     municipio = db.execute('''
@@ -260,6 +256,7 @@ def pergunta_1():
         pergunta=texto_da_pergunta 
     )
 
+
 @app.route('/perguntas/2')
 def pergunta_2():
    
@@ -278,6 +275,7 @@ def pergunta_2():
         pergunta=texto_da_pergunta
     )
 
+
 @app.route('/perguntas/3')
 def pergunta_3():
 
@@ -295,6 +293,7 @@ def pergunta_3():
         page = 'perguntas',
         pergunta=texto_da_pergunta
     )
+
 
 @app.route('/perguntas/4')
 def pergunta_4():
@@ -316,15 +315,16 @@ def pergunta_4():
         pergunta=texto_da_pergunta
     )
 
+
 @app.route('/perguntas/5')
 def pergunta_5():
 
-    texto_da_pergunta = "Qual é o contrato com o maior preço contratual, incluindo o cliente e o objeto associado?"
+    texto_da_pergunta = "Qual é o contrato com o maior preço contratual, incluindo o adjudicante e o objeto associado?"
 
     resposta = db.execute('''
-        SELECT Cliente.designacao AS Cliente, Contrato.objetoContrato AS Objeto, Contrato.precoContratual AS ValorContrato
+        SELECT Adjudicante.designacao AS Adjudicante, Contrato.objetoContrato AS Objeto, Contrato.precoContratual AS ValorContrato
         FROM Contrato
-        JOIN Cliente ON Contrato.idCliente = Cliente.idCliente
+        JOIN Adjudicante ON Contrato.idAdjudicante = Adjudicante.idAdjudicante
         ORDER BY Contrato.precoContratual DESC
         LIMIT 1;
     ''').fetchall()
@@ -335,6 +335,7 @@ def pergunta_5():
         page = 'perguntas',
         pergunta=texto_da_pergunta
     )
+
 
 @app.route('/perguntas/6')
 def pergunta_6():
@@ -358,6 +359,7 @@ def pergunta_6():
         pergunta=texto_da_pergunta
     )
 
+
 @app.route('/perguntas/7')
 def pergunta_7():
 
@@ -379,17 +381,18 @@ def pergunta_7():
         pergunta=texto_da_pergunta
     )
 
+
 @app.route('/perguntas/8')
 def pergunta_8():
 
-    texto_da_pergunta = "Quais são os cinco vendedores com o maior valor total de contratos, considerando a soma dos preços contratuais?"
+    texto_da_pergunta = "Quais são os cinco adjudicatários com o maior valor total de contratos, considerando a soma dos preços contratuais?"
 
     resposta = db.execute('''
-        SELECT Vendedor.designacao AS Vendedor, Vendedor.numFiscal AS NIF, ROUND(SUM(Contrato.precoContratual), 2) AS ValorTotal
-        FROM Vendedor
-        JOIN ContratoVendedor ON Vendedor.idVendedor = ContratoVendedor.idVendedor
-        JOIN Contrato ON ContratoVendedor.idContrato = Contrato.idContrato
-        GROUP BY Vendedor.designacao, Vendedor.numFiscal
+        SELECT Adjudicatario.designacao AS Adjudicatario, Adjudicatario.numFiscal AS NIF, ROUND(SUM(Contrato.precoContratual), 2) AS ValorTotal
+        FROM Adjudicatario
+        JOIN ContratoAdjudicatario ON Adjudicatario.idAdjudicatario = ContratoAdjudicatario.idAdjudicatario
+        JOIN Contrato ON ContratoAdjudicatario.idContrato = Contrato.idContrato
+        GROUP BY Adjudicatario.designacao, Adjudicatario.numFiscal
         ORDER BY ValorTotal DESC
         LIMIT 5;
     ''').fetchall()
@@ -400,6 +403,7 @@ def pergunta_8():
         page = 'perguntas',
         pergunta=texto_da_pergunta
     )
+
 
 @app.route('/perguntas/9')
 def pergunta_9():
@@ -425,18 +429,19 @@ def pergunta_9():
         pergunta=texto_da_pergunta
     )
 
+
 @app.route('/perguntas/10')
 def pergunta_10():
 
-    texto_da_pergunta = "Quais são os clientes que possuem contratos com vendedores cujo NIF não começa por '5' ou que não têm NIF registado?"
+    texto_da_pergunta = "Quais são os adjudicantes que possuem contratos com adjudicatários cujo NIF não começa por '5' ou que não têm NIF registado?"
 
     resposta = db.execute('''
-        SELECT DISTINCT Cliente.designacao AS Cliente, Cliente.nif AS NIF_Cliente
-        FROM Cliente
-        JOIN Contrato ON Contrato.idCliente = Cliente.idCliente
-        JOIN ContratoVendedor ON ContratoVendedor.idContrato = Contrato.idContrato
-        JOIN Vendedor ON ContratoVendedor.idVendedor = Vendedor.idVendedor
-        WHERE Vendedor.numFiscal NOT LIKE '5%' OR Vendedor.numFiscal IS NULL;  
+        SELECT DISTINCT Adjudicante.designacao AS Adjudicante, Adjudicante.nif AS NIF_Adjudicante
+        FROM Adjudicante
+        JOIN Contrato ON Contrato.idAdjudicante = Adjudicante.idAdjudicante
+        JOIN ContratoAdjudicatario ON ContratoAdjudicatario.idContrato = Contrato.idContrato
+        JOIN Adjudicatario ON ContratoAdjudicatario.idAdjudicatario = Adjudicatario.idAdjudicatario
+        WHERE Adjudicatario.numFiscal NOT LIKE '5%' OR Adjudicatario.numFiscal IS NULL;  
     ''').fetchall()
     
     return render_template(
@@ -445,6 +450,7 @@ def pergunta_10():
         page = 'perguntas',
         pergunta=texto_da_pergunta
     )
+
 
 @app.route('/perguntas/11')
 def pergunta_11():
@@ -465,6 +471,7 @@ def pergunta_11():
         page = 'perguntas',
         pergunta=texto_da_pergunta
     )
+
 
 @app.route('/perguntas/12')
 def pergunta_12():
@@ -488,6 +495,7 @@ def pergunta_12():
         page = 'perguntas',
         pergunta=texto_da_pergunta
     )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
