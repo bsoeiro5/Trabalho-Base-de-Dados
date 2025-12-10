@@ -4,12 +4,15 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 from flask import Flask, render_template, request, redirect, url_for
 import logging
 import db
+import os
 
 app = Flask(__name__)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db.DB_FILE = os.path.join(BASE_DIR, '..', 'BaseDados.db')
 
 @app.route('/')
-def pagina_inicial():
+def home():
     stats = db.execute('''
         SELECT * FROM
             (SELECT COUNT(*) AS n_contratos FROM Contrato)
@@ -18,15 +21,16 @@ def pagina_inicial():
         JOIN
             (SELECT COUNT(*) AS n_adjudicantes FROM Adjudicante)
     ''').fetchone()
-    return render_template('index.html', stats=stats, pagina='home')
+    return render_template('index.html', stats=stats)
 
 
 @app.route('/contratos/')
-def listar_contratos():
-    contratos = db.execute('''
+def contratos():
+    contratos_lista = db.execute('''
         SELECT idContrato, dataPublicacao, dataCelebracao, objetoContrato
         FROM Contrato
         ORDER BY idContrato
+        LIMIT 200
     ''').fetchall()
 
     contrato_id = request.args.get('idContrato')
@@ -35,209 +39,139 @@ def listar_contratos():
         if c:
             return redirect(f"/contratos/{c['idContrato']}/")
         else:
-            return render_template('listar_contratos.html', contratos=contratos, pagina='contratos', erro="Contrato não encontrado")
-    return render_template('listar_contratos.html', contratos=contratos, pagina='contratos')
-
+            return render_template('listar_contratos.html', contratos=contratos_lista, erro="Contrato não encontrado")
+            
+    return render_template('listar_contratos.html', contratos=contratos_lista)
 
 @app.route('/contratos/<int:cid>/')
 def detalhes_contrato(cid):
-    contrato = db.execute('SELECT idContrato, objetoContrato FROM Contrato WHERE idContrato=?', [cid]).fetchone()
-
-    detalhes = db.execute('''
-        SELECT 
-            c.precoContratual, c.prazoExecucao, c.centralizado, c.fundamentacao,
-            adj.idAdjudicatario, adj.designacao AS adjudicatario,
-            cl.idAdjudicante, cl.designacao AS adjudicante,
-            m.idMun, m.nome AS municipio,
-            d.idDist, d.nome AS distrito,
-            p.idPais, p.nome AS pais,
-            ac.descricao AS acordo, tp.descricao AS tipo_proc, cpv.descricao AS cpv,
-            tc.descricao AS tipo_contrato
+    contrato = db.execute('''
+        SELECT c.*, 
+               adj.designacao as nomeAdjudicatario, adj.idAdjudicatario,
+               cl.designacao as nomeAdjudicante, cl.idAdjudicante,
+               tc.descricao as tipoContrato,
+               tp.descricao as tipoProcedimento,
+               aq.descricao as acordoQuadro
         FROM Contrato c
-        JOIN ContratoAdjudicatario ca ON ca.idContrato=c.idContrato
-        JOIN Adjudicatario adj ON ca.idAdjudicatario=adj.idAdjudicatario
-        JOIN Adjudicante cl ON cl.idAdjudicante=c.idAdjudicante
-        JOIN Local l ON l.idContrato=c.idContrato
-        JOIN Municipio m ON l.idMun=m.idMun
-        JOIN Distrito d ON m.idDist=d.idDist
-        JOIN Pais p ON d.idPais=p.idPais
-        JOIN TipoProcedimento tp ON c.idTipoProc=tp.idTipoProc
-        JOIN Tipo t ON t.idContrato=c.idContrato 
-        JOIN TipoContrato tc ON tc.idTipoCont=t.idTipoCont 
-        JOIN AcordoQuadro ac ON ac.idAcordo=c.idAcordo
-        JOIN CP cp ON cp.idContrato=c.idContrato
-        JOIN CPV cpv ON cpv.idCPV=cp.idCPV
+        LEFT JOIN ContratoAdjudicatario ca ON c.idContrato = ca.idContrato
+        LEFT JOIN Adjudicatario adj ON ca.idAdjudicatario = adj.idAdjudicatario
+        LEFT JOIN Adjudicante cl ON c.idAdjudicante = cl.idAdjudicante
+        LEFT JOIN Tipo t ON c.idContrato = t.idContrato
+        LEFT JOIN TipoContrato tc ON t.idTipoCont = tc.idTipoCont
+        LEFT JOIN TipoProcedimento tp ON c.idTipoProc = tp.idTipoProc
+        LEFT JOIN AcordoQuadro aq ON c.idAcordo = aq.idAcordo
         WHERE c.idContrato=?
-        ORDER BY c.idContrato
-    ''', [cid]).fetchall()
-
-    contrato = db.execute('SELECT idContrato, dataPublicacao, dataCelebracao, objetoContrato FROM Contrato WHERE idContrato=?', [cid]).fetchone()
+    ''', [cid]).fetchone()
     
-    return render_template('contrato.html', contrato=contrato, detalhes=detalhes, pagina='contratos')
+    locais = db.execute('''
+        SELECT m.nome as municipio, d.nome as distrito
+        FROM Local l
+        JOIN Municipio m ON l.idMun = m.idMun
+        JOIN Distrito d ON m.idDist = d.idDist
+        WHERE l.idContrato = ?
+    ''', [cid]).fetchall()
+    
+    return render_template('contrato.html', contrato=contrato, locais=locais)
 
 
+# --- ROTA: ADJUDICATÁRIOS ---
 @app.route('/adjudicatarios/')
-def listar_todos_adjudicatarios():
-    adjudicatarios = db.execute('''
-        SELECT v.idAdjudicatario, v.designacao, v.numFiscal, COUNT(cv.idAdjudicatario) AS total_contratos
-        FROM Adjudicatario v
-        JOIN ContratoAdjudicatario cv ON v.idAdjudicatario=cv.idAdjudicatario
-        GROUP BY v.idAdjudicatario
-        ORDER BY v.idAdjudicatario
+def adjudicatarios():
+    lista = db.execute('''
+        SELECT a.idAdjudicatario, a.designacao, a.numFiscal, COUNT(ca.idAdjudicatario) AS total_contratos
+        FROM Adjudicatario a
+        JOIN ContratoAdjudicatario ca ON a.idAdjudicatario = ca.idAdjudicatario
+        GROUP BY a.idAdjudicatario
+        ORDER BY total_contratos DESC
+        LIMIT 200
     ''').fetchall()
 
-    vid = request.args.get('idVendedor')
-    vnome = request.args.get('nomeVendedor')
+    aid = request.args.get('idAdjudicatario')
+    anome = request.args.get('nomeAdjudicatario')
 
-    if vid:
-        adjudicatario = db.execute('SELECT idAdjudicatario, designacao FROM Adjudicatario WHERE idAdjudicatario=?', [vid]).fetchone()
-        if adjudicatario:
-            return redirect(f"/adjudicatarios/{adjudicatario['idAdjudicatario']}/")
-        else:
-            return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios', erro="Adjudicatário não encontrado")
+    if aid:
+        a = db.execute('SELECT idAdjudicatario FROM Adjudicatario WHERE idAdjudicatario=?', [aid]).fetchone()
+        if a: return redirect(f"/adjudicatarios/{a['idAdjudicatario']}/")
     
-    if vnome:
-        adjudicatario = db.execute('SELECT idAdjudicatario, designacao FROM Adjudicatario WHERE designacao=?', [vnome]).fetchone()
-        if adjudicatario:
-            return redirect(f"/adjudicatarios/{adjudicatario['idAdjudicatario']}/")
-        else:
-            return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios', erro="Adjudicatário não encontrado")
+    if anome:
+        a = db.execute('SELECT idAdjudicatario FROM Adjudicatario WHERE designacao LIKE ?', [f'%{anome}%']).fetchone()
+        if a: return redirect(f"/adjudicatarios/{a['idAdjudicatario']}/")
 
-    return render_template('listar_adjudicatarios.html', adjudicatarios=adjudicatarios, pagina='adjudicatarios')
+    return render_template('listar_adjudicatarios.html', adjudicatarios=lista)
 
-
-@app.route('/adjudicatarios/<int:vid>/')
-def detalhes_adjudicatario(vid):
-    adjudicatario = db.execute('SELECT idAdjudicatario, designacao, numFiscal FROM Adjudicatario WHERE idAdjudicatario=?', [vid]).fetchone()
+@app.route('/adjudicatarios/<int:aid>/')
+def detalhes_adjudicatario(aid):
+    adjudicatario_data = db.execute('SELECT * FROM Adjudicatario WHERE idAdjudicatario=?', [aid]).fetchone()
+    
     contratos = db.execute('''
         SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
         FROM Contrato c
-        JOIN ContratoAdjudicatario cv ON c.idContrato=cv.idContrato
-        WHERE cv.idAdjudicatario=?
-        ORDER BY c.idContrato
-    ''', [vid]).fetchall()
-    return render_template('adjudicatario.html', adjudicatario=adjudicatario, contratos=contratos, pagina='adjudicatarios')
+        JOIN ContratoAdjudicatario ca ON c.idContrato=ca.idContrato
+        WHERE ca.idAdjudicatario=?
+        ORDER BY c.dataCelebracao DESC
+    ''', [aid]).fetchall()
+    
+    return render_template('adjudicatario.html', adjudicatario=adjudicatario_data, contratos=contratos)
 
 
 @app.route('/adjudicantes/')
-def listar_todos_adjudicantes():
-    adjudicantes = db.execute('''
+def adjudicantes():
+    lista = db.execute('''
         SELECT cl.idAdjudicante, cl.designacao, cl.nif, COUNT(c.idContrato) AS total_contratos
         FROM Adjudicante cl
         JOIN Contrato c ON cl.idAdjudicante=c.idAdjudicante
         GROUP BY cl.idAdjudicante
-        ORDER BY cl.idAdjudicante
+        ORDER BY total_contratos DESC
+        LIMIT 200
     ''').fetchall()
 
-    cid = request.args.get('idCliente')
-    cnome = request.args.get('nomeCliente')
+    cid = request.args.get('idAdjudicante')
+    cnome = request.args.get('nomeAdjudicante')
 
     if cid:
-        adjudicante = db.execute('SELECT idAdjudicante, designacao FROM Adjudicante WHERE idAdjudicante=?', [cid]).fetchone()
-        if adjudicante:
-            return redirect(f"/adjudicantes/{adjudicante['idAdjudicante']}/")
-        else:
-            return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes', erro="Adjudicante não encontrado")
+        c = db.execute('SELECT idAdjudicante FROM Adjudicante WHERE idAdjudicante=?', [cid]).fetchone()
+        if c: return redirect(f"/adjudicantes/{c['idAdjudicante']}/")
     
     if cnome:
-        adjudicante = db.execute('SELECT idAdjudicante, designacao FROM Adjudicante WHERE designacao=?', [cnome]).fetchone()
-        if adjudicante:
-            return redirect(f"/adjudicantes/{adjudicante['idAdjudicante']}/")
-        else:
-            return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes', erro="Adjudicante não encontrado")
+        c = db.execute('SELECT idAdjudicante FROM Adjudicante WHERE designacao LIKE ?', [f'%{cnome}%']).fetchone()
+        if c: return redirect(f"/adjudicantes/{c['idAdjudicante']}/")
 
-    return render_template('listar_adjudicantes.html', adjudicantes=adjudicantes, pagina='adjudicantes')
-
+    return render_template('listar_adjudicantes.html', adjudicantes=lista)
 
 @app.route('/adjudicantes/<int:cid>/')
 def detalhes_adjudicante(cid):
-    adjudicante = db.execute('SELECT idAdjudicante, designacao, nif FROM Adjudicante WHERE idAdjudicante=?', [cid]).fetchone()
+    adjudicante_data = db.execute('SELECT * FROM Adjudicante WHERE idAdjudicante=?', [cid]).fetchone()
+    
     contratos = db.execute('''
         SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
         FROM Contrato c
-        JOIN Adjudicante cl ON c.idAdjudicante=cl.idAdjudicante
-        WHERE cl.idAdjudicante=?
-        ORDER BY c.idContrato
+        WHERE c.idAdjudicante=?
+        ORDER BY c.dataCelebracao DESC
     ''', [cid]).fetchall()
-    return render_template('adjudicante.html', adjudicante=adjudicante, contratos=contratos, pagina='adjudicantes')
+    
+    return render_template('adjudicante.html', adjudicante=adjudicante_data, contratos=contratos)
 
 
 @app.route('/pais/')
-def listar_paises():
-    pais_lista = db.execute('''
-        SELECT p.idPais, p.nome, COUNT(d.idDist) AS n_distritos
-        FROM Pais p
-        LEFT JOIN Distrito d ON d.idPais=p.idPais
-        GROUP BY p.idPais
-        ORDER BY p.idPais
+def paises():
+    paises_lista = db.execute('''
+        SELECT idPais, nome 
+        FROM Pais 
+        ORDER BY idPais
     ''').fetchall()
-    return render_template('listar_pais.html', pais=pais_lista, pagina='pais')
-
-
-@app.route('/pais/<int:pid>/')
-def detalhes_pais(pid):
-    pais = db.execute('SELECT idPais, nome FROM Pais WHERE idPais=?', [pid]).fetchone()
-    distritos = db.execute('''
-        SELECT d.idDist, d.nome, COUNT(m.idMun) AS n_municipios
-        FROM Distrito d
-        JOIN Municipio m ON m.idDist=d.idDist
-        WHERE d.idPais=?
-        GROUP BY d.idDist
-        ORDER BY d.idDist
-    ''', [pid]).fetchall()
-
-    bandeira = url_for('static', filename=f'bandeiras/{pais["nome"].replace(" ", "_")}.jpg')
-    return render_template('pais.html', pais=pais, distritos=distritos, pagina='pais', caminho_imagem=bandeira)
-
+    
+    return render_template('pais.html', paises=paises_lista)
 
 @app.route('/pais/distritos/<int:did>/')
 def detalhes_distrito(did):
-    distrito = db.execute('''
-        SELECT d.idDist, d.nome, p.idPais, p.nome AS pais
-        FROM Distrito d
-        JOIN Pais p ON p.idPais=d.idPais
-        WHERE d.idDist=?
-    ''', [did]).fetchone()
-
-    municipios = db.execute('''
-        SELECT m.idMun, m.nome, COUNT(c.idContrato) AS n_contratos
-        FROM Municipio m
-        JOIN Local l ON l.idMun=m.idMun
-        JOIN Contrato c ON c.idContrato=l.idContrato
-        WHERE m.idDist=?
-        GROUP BY m.idMun
-        ORDER BY m.idMun
-    ''', [did]).fetchall()
-
-    return render_template('distrito.html', distrito=distrito, municipios=municipios, pagina='pais')
-
-
-@app.route('/pais/distritos/municipios/<int:mid>/')
-def detalhes_municipio(mid):
-    municipio = db.execute('''
-        SELECT m.idMun, m.nome, d.idDist, d.nome AS distrito, p.idPais, p.nome AS pais
-        FROM Municipio m
-        JOIN Distrito d ON d.idDist=m.idDist
-        JOIN Pais p ON p.idPais=d.idPais
-        WHERE m.idMun=?
-    ''', [mid]).fetchone()
-
-    contratos = db.execute('''
-        SELECT c.idContrato, c.dataPublicacao, c.dataCelebracao, c.objetoContrato
-        FROM Contrato c
-        JOIN Local l ON l.idContrato=c.idContrato
-        WHERE l.idMun=?
-        ORDER BY c.idContrato
-    ''', [mid]).fetchall()
-
-    bandeira = url_for('static', filename=f'bandeiras/{municipio["pais"].replace(" ", "_")}.jpg')
-    return render_template('municipio.html', municipio=municipio, contratos=contratos, pagina='pais', caminho_imagem=bandeira)
+    distrito = db.execute('SELECT * FROM Distrito WHERE idDist=?', [did]).fetchone()
+    municipios = db.execute('SELECT * FROM Municipio WHERE idDist=?', [did]).fetchall()
+    return render_template('distrito.html', distrito=distrito, municipios=municipios)
 
 
 @app.route('/perguntas/')
-def listar_perguntas():
-    return render_template('listar_perguntas.html',page = 'perguntas')
-
+def perguntas():
+    return render_template('listar_perguntas.html')
 
 @app.route('/perguntas/1')
 def pergunta_1():

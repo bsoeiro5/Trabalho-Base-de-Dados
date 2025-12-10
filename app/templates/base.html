@@ -1,152 +1,189 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Plataforma de Contratação Pública{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}Plataforma Contratos Públicos{% endblock %}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <style>
+        /* ===== VARIÁVEIS DE COR ===== */
+        :root {
+            --color-primary: #1a3748;       /* Azul Escuro Profissional */
+            --color-primary-light: #2a4a5e; 
+            --color-accent: #4dd0e1;        /* Ciano/Verde Água para destaque */
+            --color-accent-hover: #26c6da;
+            --color-background: #f9f9f9;
+            --color-text: #333333;
+        }
+
         body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #1f1f1f;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
         }
 
-        main {
+        /* ===== HEADER ===== */
+        .site-header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .header-title {
+            text-align: center;
             flex: 1;
-            padding: 20px 15px;
+        }
+        
+        .header-title h1 { font-size: 1.6rem; font-weight: 600; margin: 0; }
+        .header-title p { font-size: 0.9rem; opacity: 0.8; margin: 0; }
+
+        .header-logo img {
+            height: 50px;
+            width: auto;
+            border-radius: 4px;
+            background: white;
+            padding: 2px;
         }
 
-        /* ===== Header ===== */
-        header {
-            background-color: #2b4c7e;
-            color: white;
-            padding: 15px 0;
-            position: relative;
-            text-align: center;
-        }
-
-        header h1 {
-            font-size: 28px;
-            margin: 0;
-            letter-spacing: 1px;
-        }
-
-        header img.image-top-right {
-            position: absolute;
-            top: 5px;
-            right: 30px;
-            width: 180px;
-        }
-
-        nav {
-            background-color: #567ebc;
-            padding: 10px 0;
-            text-align: center;
-        }
-
-        nav a.btn {
-            margin: 3px;
-            font-weight: 500;
-            color: white;
-        }
-
-        nav a.btn-outline-secondary {
-            background-color: #e0e0e0;
-            color: #2b4c7e;
-        }
-
-        nav a.btn-outline-secondary:hover {
-            background-color: #2b4c7e;
-            color: white;
-        }
-
-        nav a.btn-success {
-            background-color: #2b4c7e;
-            border-color: #2b4c7e;
-        }
-
-        /* ===== Footer ===== */
-        footer {
-            background-color: #2b4c7e;
-            color: white;
-            text-align: center;
-            padding: 15px 10px;
-            font-size: 14px;
-        }
-
-        /* ===== Tabelas ===== */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        /* ===== NAVEGAÇÃO ===== */
+        .site-nav {
             background-color: white;
-            border-radius: 6px;
-            overflow: hidden;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        th {
-            background-color: #2b4c7e;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        .nav-menu {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.8rem 1.2rem;
+            color: var(--color-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
         }
 
-        tr:hover {
-            background-color: #eef3ff;
+        .nav-link:hover {
+            background-color: #f0fdf4;
+            color: var(--color-primary);
         }
 
-        /* ===== Imagens ===== */
-        .image-below {
-            width: 90%;
-            max-width: 1100px;
-            margin-top: 30px;
-            border-radius: 6px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        /* Classe .active gerada pelo Flask/Jinja2 */
+        .nav-link.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-accent);
+            background-color: rgba(77, 208, 225, 0.1);
+        }
+
+        /* ===== CONTEÚDO PRINCIPAL ===== */
+        .site-main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ===== FOOTER ===== */
+        .site-footer {
+            background-color: var(--color-primary);
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.85rem;
+            margin-top: auto;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Análise de Plataforma de Contratação Pública (2024)</h1>
-        <img src="/static/simboloFcup.png" class="image-top-right" alt="FCUP" onerror="this.style.display='none'">
+
+    <header class="site-header">
+            
+            <div class="header-title">
+                <h1>Plataforma Contratos Públicos</h1>
+                <p>Base de Dados de Contratação Pública 2024</p>
+            </div>
+            
+            <div class="header-logo">
+                <img src="{{ url_for('static', filename='simboloFcup.png') }}" alt="FCUP" onerror="this.style.opacity=0.3">
+            </div>
+        </div>
     </header>
 
-    <nav>
-        <a href="/" class="btn {% if pagina == 'home' %}btn-success{% else %}btn-outline-secondary{% endif %}">Home</a>
-        <a href="/contratos/" class="btn {% if pagina == 'contratos' %}btn-success{% else %}btn-outline-secondary{% endif %}">Contratos</a>
-        <a href="/adjudicatarios/" class="btn {% if pagina == 'adjudicatarios' %}btn-success{% else %}btn-outline-secondary{% endif %}">Adjudicatários</a>
-        <a href="/adjudicantes/" class="btn {% if pagina == 'adjudicantes' %}btn-success{% else %}btn-outline-secondary{% endif %}">Adjudicantes</a>
-        <a href="/pais/" class="btn {% if pagina == 'pais' %}btn-success{% else %}btn-outline-secondary{% endif %}">Países</a>
-        <a href="/perguntas/" class="btn {% if pagina == 'perguntas' %}btn-success{% else %}btn-outline-secondary{% endif %}">Perguntas</a>
+    <nav class="site-nav">
+        <ul class="nav-menu">
+            <li>
+                <a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">
+                    <i class="bi bi-house-door-fill"></i> Home
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('contratos') }}" class="nav-link {% if 'contrato' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-file-text-fill"></i> Contratos
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('adjudicatarios') }}" class="nav-link {% if 'adjudicatario' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-briefcase-fill"></i> Adjudicatários
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('adjudicantes') }}" class="nav-link {% if 'adjudicante' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-bank2"></i> Adjudicantes
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('paises') }}" class="nav-link {% if 'pais' in request.endpoint or 'distrito' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-globe-europe-africa"></i> Países
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('perguntas') }}" class="nav-link {% if 'pergunta' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-question-circle-fill"></i> Perguntas
+                </a>
+            </li>
+        </ul>
     </nav>
 
-    <main class="container">
-        {% block content %}{% endblock %}
+    <main class="site-main">
+        {% block content %}
+        {% endblock %}
     </main>
 
-    <footer>
-        <p>
-            <span>Bernardo Soeiro</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span>Marco Almeida</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span>Rodrigo Dias</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            &copy; Contratos Públicos 2024
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        </p>
-        <p>L.IACD/L.CC - Bases de Dados</p>
+    <footer class="site-footer">
+        <p>&copy; 2025 FCUP - Bases de Dados L.IACD/L.CC| Bernardo Soeiro, Marco Almeida, Rodrigo Dias</p>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

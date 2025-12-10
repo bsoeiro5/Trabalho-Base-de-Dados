@@ -1,65 +1,125 @@
 {% extends 'base.html' %}
 
+{% block title %}Detalhes do Contrato{% endblock %}
+
 {% block content %}
-<h2>Detalhes do Contrato</h2>
-
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        Informação Geral
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="badge bg-secondary mb-2">Contrato #{{ contrato.idContrato }}</span>
+            <h1 class="h3 mb-0">{{ contrato.objetoContrato }}</h1>
+        </div>
+        <span class="badge bg-success fs-5">{{ contrato.precoContratual }} €</span>
     </div>
-    <div class="card-body">
-        <h5 class="card-title">Contrato #{{ contrato.idContrato }}</h5>
-        <p class="card-text"><strong>Objeto:</strong> {{ contrato.objetoContrato }}</p>
-        <p class="card-text"><strong>Data Publicação:</strong> {{ contrato.dataPublicacao }}</p>
-        <p class="card-text"><strong>Data Celebração:</strong> {{ contrato.dataCelebracao }}</p>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light fw-bold text-primary">
+                    <i class="bi bi-info-circle me-2"></i>Informação Geral
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="text-muted" style="width: 40%">Data de Publicação:</th>
+                                <td>{{ contrato.dataPublicacao }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Data de Celebração:</th>
+                                <td>{{ contrato.dataCelebracao }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Tipo de Contrato:</th>
+                                <td>{{ contrato.tipoContrato }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Tipo de Procedimento:</th>
+                                <td>{{ contrato.tipoProcedimento }}</td>
+                            </tr>
+                             <tr>
+                                <th class="text-muted">Regime Centralizado:</th>
+                                <td>
+                                    {% if contrato.centralizado == 'Sim' %}
+                                        <span class="badge bg-success">Sim</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Não</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light fw-bold text-primary">
+                    <i class="bi bi-list-check me-2"></i>Detalhes Técnicos & Localização
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong class="d-block text-muted small">Fundamentação Legal</strong>
+                            {{ contrato.fundamentacao }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong class="d-block text-muted small">Prazo de Execução</strong>
+                            {{ contrato.prazoExecucao }} dias
+                        </li>
+                        <li class="list-group-item">
+                            <strong class="d-block text-muted small">Acordo Quadro</strong>
+                            {% if contrato.acordoQuadro %}
+                                {{ contrato.acordoQuadro }}
+                            {% else %}
+                                <span class="text-muted fst-italic">Não aplicável</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item bg-light">
+                            <strong class="d-block text-muted small mb-1">Local de Execução</strong>
+                            {% if locais %}
+                                {% for local in locais %}
+                                    <span class="badge bg-info text-dark me-1">
+                                        <i class="bi bi-geo-alt-fill"></i> {{ local.municipio }} ({{ local.distrito }})
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">Sem informação de local</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3 border-start border-4 border-primary">
+                <div class="card-body">
+                    <small class="text-uppercase text-muted fw-bold">Adjudicante (Entidade)</small>
+                    <h5 class="card-title mt-2 fs-6">
+                        <a href="/adjudicantes/{{ contrato.idAdjudicante }}/" class="text-decoration-none stretched-link">
+                            {{ contrato.nomeAdjudicante }}
+                        </a>
+                    </h5>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-start border-4 border-success">
+                <div class="card-body">
+                    <small class="text-uppercase text-muted fw-bold">Adjudicatário (Fornecedor)</small>
+                    <h5 class="card-title mt-2 fs-6">
+                        <a href="/adjudicatarios/{{ contrato.idAdjudicatario }}/" class="text-decoration-none stretched-link">
+                            {{ contrato.nomeAdjudicatario }}
+                        </a>
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/contratos/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar à Lista de Contratos
+        </a>
     </div>
 </div>
-
-<h3>Detalhes Adicionais</h3>
-<div class="table-responsive">
-    <table class="table table-bordered table-hover">
-        <thead class="thead-light">
-            <tr>
-                <th>Preço</th>
-                <th>Prazo (dias)</th>
-                <th>Centralizado</th>
-                <th>Fundamentação</th>
-                <th>Adjudicatário</th>
-                <th>Adjudicante</th>
-                <th>Município</th>
-                <th>Distrito</th>
-                <th>País</th>
-                <th>Acordo</th>
-                <th>Tipo Proc.</th>
-                <th>CPV</th>
-                <th>Tipo Contrato</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for d in detalhes %}
-            <tr>
-                <td>{{ d.precoContratual }} €</td>
-                <td>{{ d.prazoExecucao }}</td>
-                <td>{{ d.centralizado }}</td>
-                <td>{{ d.fundamentacao }}</td>
-                <td><a href="/adjudicatarios/{{ d.idAdjudicatario }}/">{{ d.adjudicatario }}</a></td>
-                <td><a href="/adjudicantes/{{ d.idAdjudicante }}/">{{ d.adjudicante }}</a></td>
-                <td><a href="/pais/distritos/municipios/{{ d.idMun }}/">{{ d.municipio }}</a></td>
-                <td><a href="/pais/distritos/{{ d.idDist }}/">{{ d.distrito }}</a></td>
-                <td><a href="/pais/{{ d.idPais }}/">{{ d.pais }}</a></td>
-                <td>{{ d.acordo }}</td>
-                <td>{{ d.tipo_proc }}</td>
-                <td>{{ d.cpv }}</td>
-                <td>{{ d.tipo_contrato }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="13">Não existem detalhes adicionais disponíveis.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<a href="/contratos/" class="btn btn-secondary mt-3">Voltar à lista</a>
 {% endblock %}

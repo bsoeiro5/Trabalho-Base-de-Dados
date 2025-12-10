@@ -1,40 +1,77 @@
 {% extends 'base.html' %}
 
+{% block title %}Lista de Contratos{% endblock %}
+
 {% block content %}
-<h2>Contratos</h2>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Contratos Públicos</h1>
+        <span class="badge bg-primary rounded-pill">{{ contratos|length }} Registos</span>
+    </div>
 
-{% if erro %}
-    <div class="alert alert-danger">{{ erro }}</div>
-{% endif %}
+    <div class="card shadow-sm mb-4 bg-light border-0">
+        <div class="card-body">
+            <form action="/contratos/" method="get" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label for="idContrato" class="col-form-label fw-bold">Pesquisar ID:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="number" name="idContrato" id="idContrato" class="form-control" placeholder="Ex: 10424261">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Pesquisar
+                    </button>
+                    <a href="/contratos/" class="btn btn-outline-secondary ms-1">Limpar</a>
+                </div>
+            </form>
+            {% if erro %}
+                <div class="alert alert-danger mt-3 mb-0">{{ erro }}</div>
+            {% endif %}
+        </div>
+    </div>
 
-<form action="/contratos/" method="get" class="form-inline mb-3">
-    <input type="number" name="idContrato" class="form-control mr-2" placeholder="ID Contrato">
-    <button type="submit" class="btn btn-primary">Pesquisar</button>
-    <a href="/contratos/" class="btn btn-secondary ml-2">Limpar</a>
-</form>
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Objeto</th>
-            <th>Data Publicação</th>
-            <th>Data Celebração</th>
-            <th>Ações</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for c in contratos %}
-        <tr>
-            <td><a href="/contratos/{{ c.idContrato }}/"><strong>{{ c.idContrato }}</strong></a></td>
-            <td>{{ c.objetoContrato }}</td>
-            <td>{{ c.dataPublicacao }}</td>
-            <td>{{ c.dataCelebracao }}</td>
-            <td>
-                <a href="/contratos/{{ c.idContrato }}/" class="btn btn-sm btn-info">Detalhes</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">ID Contrato</th>
+                        <th>Objeto do Contrato</th>
+                        <th class="text-center">Data Publicação</th>
+                        <th class="text-center">Data Celebração</th>
+                        <th class="text-end pe-4">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in contratos %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">
+                            {{ c.idContrato }}
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 400px;" title="{{ c.objetoContrato }}">
+                                {{ c.objetoContrato }}
+                            </div>
+                        </td>
+                        <td class="text-center small text-muted">{{ c.dataPublicacao }}</td>
+                        <td class="text-center small text-muted">{{ c.dataCelebracao }}</td>
+                        <td class="text-end pe-4">
+                            <a href="/contratos/{{ c.idContrato }}/" class="btn btn-sm btn-outline-primary">
+                                Ver Detalhes
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            Não foram encontrados contratos.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
