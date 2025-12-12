@@ -2,60 +2,63 @@ import pandas as pd
 import sqlite3
 import os
 
-def create_schema(cur):
-    sql_schema = """
-    CREATE TABLE IF NOT EXISTS Pais (
-        idPais INTEGER PRIMARY KEY,
-        nome VARCHAR2(255)
-    );
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'BaseDados.db')
 
-    CREATE TABLE IF NOT EXISTS Distrito (
-        idDist INTEGER PRIMARY KEY,
+def create_schema(conn):
+    cursor = conn.cursor()
+    tables = [
+        "ContratoAdjudicatario", "Local", "Tipo", "CP",
+        "Contrato", "Adjudicatario", "Adjudicante",
+        "TipoProcedimento", "CPV", "TipoContrato", "AcordoQuadro",
+        "Municipio", "Distrito", "Pais"
+    ]
+    for table in tables:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
+
+    sql_schema = """
+    CREATE TABLE Pais (
+        idPais INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome VARCHAR2(255) UNIQUE
+    );
+    CREATE TABLE Distrito (
+        idDist INTEGER PRIMARY KEY AUTOINCREMENT,
         nome VARCHAR2(255),
         idPais INTEGER,
         FOREIGN KEY(idPais) REFERENCES Pais (idPais)
     );
-
-    CREATE TABLE IF NOT EXISTS Municipio (
-        idMun INTEGER PRIMARY KEY,
+    CREATE TABLE Municipio (
+        idMun INTEGER PRIMARY KEY AUTOINCREMENT,
         nome VARCHAR2(255),
-        idDist INTEGER, 
+        idDist INTEGER,
         FOREIGN KEY(idDist) REFERENCES Distrito (idDist)
     );
-
-    CREATE TABLE IF NOT EXISTS AcordoQuadro(
-        idAcordo INTEGER PRIMARY KEY,
-        descricao VARCHAR2(255)
+    CREATE TABLE AcordoQuadro(
+        idAcordo INTEGER PRIMARY KEY AUTOINCREMENT,
+        descricao VARCHAR2(255) UNIQUE
     );
-
-    CREATE TABLE IF NOT EXISTS TipoContrato(
-        idTipoCont INTEGER PRIMARY KEY,
-        descricao VARCHAR2(255)
+    CREATE TABLE TipoContrato(
+        idTipoCont INTEGER PRIMARY KEY AUTOINCREMENT,
+        descricao VARCHAR2(255) UNIQUE
     );
-
-    CREATE TABLE IF NOT EXISTS CPV(
-        idCPV INTEGER PRIMARY KEY,
-        descricao VARCHAR2(255)
+    CREATE TABLE CPV(
+        idCPV INTEGER PRIMARY KEY AUTOINCREMENT,
+        descricao VARCHAR2(255) UNIQUE
     );
-
-    CREATE TABLE IF NOT EXISTS TipoProcedimento(
-        idTipoProc INTEGER PRIMARY KEY,
-        descricao VARCHAR2(255)
+    CREATE TABLE TipoProcedimento(
+        idTipoProc INTEGER PRIMARY KEY AUTOINCREMENT,
+        descricao VARCHAR2(255) UNIQUE
     );
-
-    CREATE TABLE IF NOT EXISTS Adjudicante(
-        idAdjudicante INTEGER PRIMARY KEY,
-        nif INTEGER,
+    CREATE TABLE Adjudicante(
+        idAdjudicante INTEGER PRIMARY KEY AUTOINCREMENT,
+        nif INTEGER UNIQUE,
         designacao VARCHAR2(255)
     );
-
-    CREATE TABLE IF NOT EXISTS Adjudicatario(
-        idAdjudicatario INTEGER PRIMARY KEY,
-        numFiscal TEXT,
+    CREATE TABLE Adjudicatario(
+        idAdjudicatario INTEGER PRIMARY KEY AUTOINCREMENT,
+        numFiscal TEXT UNIQUE,
         designacao VARCHAR2(255)
     );
-
-    CREATE TABLE IF NOT EXISTS Contrato (
+    CREATE TABLE Contrato (
         idContrato INTEGER PRIMARY KEY,
         prazoExecucao INTEGER,
         precoContratual FLOAT,
@@ -63,7 +66,7 @@ def create_schema(cur):
         fundamentacao VARCHAR2(255),
         objetoContrato VARCHAR2(255),
         dataPublicacao DATE,
-        dataCelebracao DATE, 
+        dataCelebracao DATE,
         idAcordo INTEGER,
         idTipoProc INTEGER,
         idAdjudicante INTEGER,
@@ -71,32 +74,28 @@ def create_schema(cur):
         FOREIGN KEY (idAcordo) REFERENCES AcordoQuadro (idAcordo),
         FOREIGN KEY (idTipoProc) REFERENCES TipoProcedimento(idTipoProc)
     );
-
-    CREATE TABLE IF NOT EXISTS ContratoAdjudicatario(
+    CREATE TABLE ContratoAdjudicatario(
         idContrato INTEGER,
         idAdjudicatario INTEGER,
         PRIMARY KEY(idContrato,idAdjudicatario),
         FOREIGN KEY (idContrato) REFERENCES Contrato (idContrato),
         FOREIGN KEY (idAdjudicatario) REFERENCES Adjudicatario (idAdjudicatario)
     );
-
-    CREATE TABLE IF NOT EXISTS Local(
+    CREATE TABLE Local(
         idContrato INTEGER,
         idMun INTEGER,
         PRIMARY KEY(idContrato,idMun),
         FOREIGN KEY (idContrato) REFERENCES Contrato (idContrato),
         FOREIGN KEY (idMun) REFERENCES Municipio (idMun)
     );
-
-    CREATE TABLE IF NOT EXISTS Tipo(
+    CREATE TABLE Tipo(
         idContrato INTEGER,
         idTipoCont INTEGER,
         PRIMARY KEY(idContrato,idTipoCont),
         FOREIGN KEY (idContrato) REFERENCES Contrato (idContrato),
         FOREIGN KEY (idTipoCont) REFERENCES TipoContrato (idTipoCont)
     );
-
-    CREATE TABLE IF NOT EXISTS CP(
+    CREATE TABLE CP(
         idContrato INTEGER,
         idCPV INTEGER,
         PRIMARY KEY(idContrato,idCPV),
@@ -104,230 +103,145 @@ def create_schema(cur):
         FOREIGN KEY (idCPV) REFERENCES CPV (idCPV)
     );
     """
-    cur.executescript(sql_schema)
+    cursor.executescript(sql_schema)
+    conn.commit()
+    print("Esquema criado.")
 
-def Pais(pais:str,cur):
-    cur.execute('SELECT idPais FROM Pais WHERE nome = ?', [pais])
-    res = cur.fetchone()
-    if res:
-        return res[0]
+def get_or_create(cursor, table, column, value, parent_col=None, parent_id=None):
+    if value is None or str(value).strip() == '' or str(value).lower() == 'nan':
+        return None
+    value = str(value).strip()
+    query = f"SELECT rowid FROM {table} WHERE {column} = ?"
+    args = [value]
+    if parent_col and parent_id:
+        query += f" AND {parent_col} = ?"
+        args.append(parent_id)
+    cursor.execute(query, args)
+    result = cursor.fetchone()
+    if result:
+        return result[0]
     else:
-        cur.execute('INSERT INTO Pais (nome) VALUES (?)', [pais])
-        return cur.lastrowid
-    
-def Distrito(dist:str,idPais:int,cur):
-    cur.execute('SELECT idDist FROM Distrito WHERE nome = ?', [dist])
-    res = cur.fetchone()
-    if res:
-        return res[0]
-    else:
-        cur.execute('INSERT INTO Distrito (nome, idPais) VALUES (?, ?)', [dist,idPais])
-        return cur.lastrowid
-    
-def Municipio(muni:str,idDist:int,cur):
-    cur.execute('SELECT idMun FROM Municipio WHERE nome = ?', [muni])
-    res = cur.fetchone()
-    if res:
-        return res[0]
-    else:
-        cur.execute('INSERT INTO Municipio (nome, idDist) VALUES (?, ?)', [muni,idDist])
-        return cur.lastrowid
+        insert_query = f"INSERT INTO {table} ({column}"
+        if parent_col:
+            insert_query += f", {parent_col}"
+        insert_query += ") VALUES (?"
+        if parent_col:
+            insert_query += ", ?"
+        insert_query += ")"
+        cursor.execute(insert_query, args)
+        return cursor.lastrowid
 
-def NovoLocal(local: str, cur):
-    groups = local.split('|')
-    matriz = [list(map(str.strip, group.split(','))) for group in groups]
-    idsMun = []
+def parse_entity(entity_str):
+    if pd.isna(entity_str): return None, None
+    parts = str(entity_str).split(' - ', 1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    return None, str(entity_str).strip()
 
-    for linha in matriz:
-        if(len(linha) == 1):
-            linha.append(linha[0])
-            linha.append(linha[0])
-        elif(len(linha) == 2):
-            linha.append(linha[1])
-        
-        idPais = Pais(linha[0], cur)
-        idDist = Distrito(linha[1], idPais, cur)
-        idMuni = Municipio(linha[2], idDist, cur)
-        idsMun.append(idMuni)
-    return idsMun
+def format_date(date_val):
+    if pd.isna(date_val):
+        return None
+    return str(date_val)
 
-def CPV(desc:str,cur):
-    groups = desc.split('|')
-    idsCPV = []
-    for linha in groups:
-        cur.execute('SELECT idCPV FROM CPV WHERE descricao = ?', [linha.strip()])
-        res = cur.fetchone()
-        if res: idsCPV.append(res[0])
-        else: 
-            cur.execute('INSERT INTO CPV (descricao) VALUES (?)', [linha.strip()])
-            idsCPV.append(cur.lastrowid)
-    return idsCPV
-
-def TipoContrato(desc:str,cur):
-    groups = desc.split('|')
-    idsTipoCont = []
-    for linha in groups:
-        cur.execute('SELECT idTipoCont FROM TipoContrato WHERE descricao = ?', [linha.strip()])
-        res = cur.fetchone()
-        if res: idsTipoCont.append(res[0])
-        else:
-            cur.execute('INSERT INTO TipoContrato (descricao) VALUES (?)', [linha.strip()])
-            idsTipoCont.append(cur.lastrowid)
-    return idsTipoCont
-
-def TipoProcedimento(desc:str,cur):
-    cur.execute('SELECT idTipoProc FROM TipoProcedimento WHERE descricao = ?',[desc])
-    res = cur.fetchone()
-    if res: return res[0]
-    else:
-        cur.execute('INSERT INTO TipoProcedimento (descricao) VALUES (?)',[desc])
-        return cur.lastrowid
-
-def AcordoQuadro(desc,cur):
-    if pd.isna(desc):
-        cur.execute('SELECT idAcordo FROM AcordoQuadro WHERE descricao IS NULL')
-    else:
-        cur.execute('SELECT idAcordo FROM AcordoQuadro WHERE descricao = ?', [desc])
-    res=cur.fetchone()
-
-    if res: return res[0]
-    else: 
-        cur.execute('INSERT INTO AcordoQuadro (descricao) VALUES (?)',[desc])
-        return cur.lastrowid
-
-def Adjudicatario(dados,cur):
-    idsAdjudicatario = []
-    if pd.isna(dados):
-        numFiscal = '0'
-        designacao = 'Indeterminado'
-        cur.execute('SELECT idAdjudicatario FROM Adjudicatario WHERE numFiscal = ? AND designacao = ?', [numFiscal, designacao])
-        res = cur.fetchone()
-        if res: idsAdjudicatario.append(res[0])
-        else:
-            cur.execute('INSERT INTO Adjudicatario (numFiscal, designacao) VALUES (?,?)', [numFiscal, designacao])
-            idsAdjudicatario.append(cur.lastrowid)
-
-    else:
-        groups = dados.split('|')
-        for linha in groups:
-            linha = linha.split('-',maxsplit = 1)
-            numFiscal, designacao = linha[0].strip(), linha[1].strip()
-
-            cur.execute('SELECT idAdjudicatario FROM Adjudicatario WHERE numFiscal = ? AND designacao = ?', [numFiscal, designacao])
-            res = cur.fetchone()
-            if res: idsAdjudicatario.append(res[0])
-            else:
-                cur.execute('INSERT INTO Adjudicatario (numFiscal, designacao) VALUES (?,?)', [numFiscal, designacao])
-                idsAdjudicatario.append(cur.lastrowid)
-    return idsAdjudicatario
-
-def Adjudicante(dados,cur):
-    groups = dados.split('-',maxsplit = 1)
-    nif, designacao = groups[0].strip(), groups[1].strip()
-    cur.execute('SELECT idAdjudicante FROM Adjudicante WHERE nif = ? AND designacao = ?', [nif, designacao])
-    res = cur.fetchone()
-    if res: return res[0]
-    else:
-        cur.execute('INSERT INTO Adjudicante (nif, designacao) VALUES (?, ?)', [nif, designacao])
-        return cur.lastrowid
-
-def Contrato(idCont, dataPubl, dataCele, prazo, funda, centralizado, objetoContr, preco,idtipoProc,idacordoQuadro,idAdjudicante,cur):
-    cur.execute('SELECT idContrato FROM Contrato WHERE idContrato = ?', [idCont])
-    res = cur.fetchone()
-
-    if res:
-        return res[0]
-    else:
-        dataPubl = f"{dataPubl}"     
-        dataCele = f"{dataCele}" 
-        cur.execute('INSERT INTO Contrato (idContrato, prazoExecucao, precoContratual, centralizado, fundamentacao, objetoContrato, dataPublicacao, dataCelebracao,idAcordo,idTipoProc,idAdjudicante) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-                    [idCont, prazo, preco, centralizado, funda, objetoContr, dataPubl, dataCele,idacordoQuadro,idtipoProc,idAdjudicante])
-        return cur.lastrowid
-
-def ContratoAdjudicatario(idContrato,idsAdjudicatario,cur):
-    for idAdj in idsAdjudicatario:
-        cur.execute('INSERT INTO ContratoAdjudicatario (idContrato,idAdjudicatario) VALUES (?,?)',[idContrato,idAdj])
-        
-def Local(idContrato,idsMun,cur):
-    for idMun in idsMun:
-        cur.execute('SELECT idContrato,idMun FROM Local WHERE idContrato = ? AND idMun = ?', [idContrato,idMun])
-        res = cur.fetchone()
-        if not res:
-            cur.execute('INSERT INTO Local (idContrato,idMun) VALUES (?,?)',[idContrato,idMun])
-
-def Tipo(idContrato,idsTipoCont,cur):
-    for idTipoCont in idsTipoCont:
-        cur.execute('INSERT INTO Tipo (idContrato,idTipoCont) VALUES (?,?)',[idContrato,idTipoCont])
-
-def CP(idContrato,idsCPV,cur):
-    for idCPV in idsCPV:
-        cur.execute('INSERT INTO CP (idContrato,idCPV) VALUES (?,?)',[idContrato,idCPV])
-
-def main():
-    # Caminho absoluto para o teu ficheiro no Mac
-    caminho = "/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/ContratosPublicos2024.xlsx"
-        
-    try:
-        df = pd.read_excel(caminho)
-    except FileNotFoundError:
-        print(f"ERRO CRÍTICO: Não foi possível encontrar o ficheiro em:\n{caminho}")
-        print("Confirma se o nome do ficheiro está correto na pasta.")
+def povoar_bd(file_path):
+    if not os.path.exists(file_path):
+        print(f"Ficheiro {file_path} nao encontrado.")
         return
 
-    # Garante que cria a DB no mesmo local onde o script está a correr, ou num caminho específico
-    # Se quiseres a DB na mesma pasta do Excel:
-    caminho_db = "/Users/bernardosoeiro/faculdade/2ano/1semestre/bdados/Trabalho-Base-de-Dados/BaseDados.db"
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    create_schema(conn)
+
+    if file_path.endswith('.xlsx'):
+        df = pd.read_excel(file_path)
+    else:
+        try:
+            df = pd.read_csv(file_path, encoding='utf-8')
+        except UnicodeDecodeError:
+            df = pd.read_csv(file_path, encoding='latin1')
     
-    con = sqlite3.connect(caminho_db)
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-
-    print("A criar esquema e a inserir dados... (isto pode demorar um pouco)")
-    create_schema(cur)
-
+    count = 0
     for index, row in df.iterrows():
-        local = row['localExecucao']
-        idsMun = NovoLocal(local,cur)
+        try:
+            id_acordo = get_or_create(cursor, 'AcordoQuadro', 'descricao', row['DescrAcordoQuadro'])
+            id_tipo_proc = get_or_create(cursor, 'TipoProcedimento', 'descricao', row['tipoprocedimento'])
+            
+            local_str = str(row['localExecucao'])
+            parts = [p.strip() for p in local_str.split(',')]
+            id_pais = None
+            id_dist = None
+            id_mun = None
+            if len(parts) >= 1:
+                id_pais = get_or_create(cursor, 'Pais', 'nome', parts[0])
+            if len(parts) >= 2 and id_pais:
+                id_dist = get_or_create(cursor, 'Distrito', 'nome', parts[1], 'idPais', id_pais)
+            if len(parts) >= 3 and id_dist:
+                id_mun = get_or_create(cursor, 'Municipio', 'nome', parts[2], 'idDist', id_dist)
+            
+            nif_adj, nome_adj = parse_entity(row['adjudicante'])
+            id_adjudicante = None
+            if nif_adj:
+                cursor.execute("SELECT idAdjudicante FROM Adjudicante WHERE nif = ?", (nif_adj,))
+                res = cursor.fetchone()
+                if res:
+                    id_adjudicante = res[0]
+                else:
+                    cursor.execute("INSERT INTO Adjudicante (nif, designacao) VALUES (?, ?)", (nif_adj, nome_adj))
+                    id_adjudicante = cursor.lastrowid
 
-        descCPV = row['cpv']
-        idsCPV = CPV(descCPV,cur)
+            data_pub = format_date(row['dataPublicacao'])
+            data_cel = format_date(row['dataCelebracaoContrato'])
 
-        descTipoContrato = row['tipoContrato']
-        idsTipoCont = TipoContrato(descTipoContrato,cur)
+            cursor.execute("""
+                INSERT OR IGNORE INTO Contrato (
+                    idContrato, prazoExecucao, precoContratual, centralizado, 
+                    fundamentacao, objetoContrato, dataPublicacao, dataCelebracao, 
+                    idAcordo, idTipoProc, idAdjudicante
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                row['idcontrato'], row['prazoExecucao'], row['precoContratual'], 
+                row['ProcedimentoCentralizado'], row['fundamentacao'], row['objectoContrato'],
+                data_pub, data_cel,
+                id_acordo, id_tipo_proc, id_adjudicante
+            ))
+            
+            nif_vend, nome_vend = parse_entity(row['adjudicatarios'])
+            if nif_vend:
+                cursor.execute("SELECT idAdjudicatario FROM Adjudicatario WHERE numFiscal = ?", (nif_vend,))
+                res = cursor.fetchone()
+                if res:
+                    id_vend = res[0]
+                else:
+                    cursor.execute("INSERT INTO Adjudicatario (numFiscal, designacao) VALUES (?, ?)", (nif_vend, nome_vend))
+                    id_vend = cursor.lastrowid
+                cursor.execute("INSERT OR IGNORE INTO ContratoAdjudicatario (idContrato, idAdjudicatario) VALUES (?, ?)", (row['idcontrato'], id_vend))
 
-        descTipoProcedimento = row['tipoprocedimento']
-        idtipoProc = TipoProcedimento(descTipoProcedimento,cur)
-        
-        descAcordoQuadro = row['DescrAcordoQuadro']
-        idacordoQuadro = AcordoQuadro(descAcordoQuadro,cur)
+            id_tipo_cont = get_or_create(cursor, 'TipoContrato', 'descricao', row['tipoContrato'])
+            if id_tipo_cont:
+                cursor.execute("INSERT OR IGNORE INTO Tipo (idContrato, idTipoCont) VALUES (?, ?)", (row['idcontrato'], id_tipo_cont))
 
-        dadosAdjudicante = row['adjudicante']
-        idAdjudicante = Adjudicante(dadosAdjudicante,cur) 
+            id_cpv = get_or_create(cursor, 'CPV', 'descricao', row['cpv'])
+            if id_cpv:
+                cursor.execute("INSERT OR IGNORE INTO CP (idContrato, idCPV) VALUES (?, ?)", (row['idcontrato'], id_cpv))
 
-        idCont = row['idcontrato']
-        preco = row['precoContratual']
-        dataPubl = row['dataPublicacao']
-        dataCele = row['dataCelebracaoContrato']
-        prazo = row['prazoExecucao']
-        funda = row['fundamentacao']
-        centralizado = row['ProcedimentoCentralizado']
-        objetoContr = row['objectoContrato']
-        idContrato = Contrato(idCont,dataPubl,dataCele,prazo,funda,centralizado,objetoContr,preco,idtipoProc,idacordoQuadro,idAdjudicante,cur)
+            if id_mun:
+                cursor.execute("INSERT OR IGNORE INTO Local (idContrato, idMun) VALUES (?, ?)", (row['idcontrato'], id_mun))
 
-        dadosAdjudicatario = row['adjudicatarios']
-        idsAdjudicatario = Adjudicatario(dadosAdjudicatario,cur)
+            count += 1
+            if count % 1000 == 0:
+                conn.commit()
 
-        ContratoAdjudicatario(idContrato,idsAdjudicatario,cur)
+        except Exception as e:
+            print(f"Erro na linha {index}: {e}")
+            continue
 
-        Local(idContrato,idsMun,cur)
+    conn.commit()
+    conn.close()
+    print(f"Concluido. Total: {count}")
 
-        Tipo(idContrato,idsTipoCont,cur)
-
-        CP(idContrato,idsCPV,cur)
-
-    con.commit()
-    con.close()
-    print(f"Sucesso! Base de dados criada em: {caminho_db}")
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    xlsx_file = "ContratosPublicos2024.xlsx"
+    if os.path.exists(xlsx_file):
+        povoar_bd(xlsx_file)
+    else:
+        print(f"Ficheiro {xlsx_file} nao encontrado.")
