@@ -171,8 +171,14 @@ def povoar_bd(file_path):
             id_pais = None
             id_dist = None
             id_mun = None
+            
             if len(parts) >= 1:
-                id_pais = get_or_create(cursor, 'Pais', 'nome', parts[0])
+                nomes_paises = [nome.strip() for nome in parts[0].split('|')]
+                for i, nome_pais in enumerate(nomes_paises):
+                    p_id = get_or_create(cursor, 'Pais', 'nome', nome_pais)
+                    if i == 0:
+                        id_pais = p_id
+
             if len(parts) >= 2 and id_pais:
                 id_dist = get_or_create(cursor, 'Distrito', 'nome', parts[1], 'idPais', id_pais)
             if len(parts) >= 3 and id_dist:

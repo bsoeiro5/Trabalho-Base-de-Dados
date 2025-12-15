@@ -27,7 +27,11 @@ def home():
 @app.route('/contratos/')
 def contratos():
     contratos_lista = db.execute('''
-        SELECT idContrato, dataPublicacao, dataCelebracao, objetoContrato
+        SELECT 
+            idContrato, 
+            SUBSTR(dataPublicacao, 1, 10) AS dataPublicacao, 
+            SUBSTR(dataCelebracao, 1, 10) AS dataCelebracao, 
+            objetoContrato
         FROM Contrato
         ORDER BY idContrato
         LIMIT 200
@@ -46,20 +50,18 @@ def contratos():
 @app.route('/contratos/<int:cid>/')
 def detalhes_contrato(cid):
     contrato = db.execute('''
-        SELECT c.*, 
-               adj.designacao as nomeAdjudicatario, adj.idAdjudicatario,
-               cl.designacao as nomeAdjudicante, cl.idAdjudicante,
-               tc.descricao as tipoContrato,
-               tp.descricao as tipoProcedimento,
-               aq.descricao as acordoQuadro
+        SELECT 
+            c.idContrato, c.prazoExecucao, c.precoContratual, c.centralizado, c.fundamentacao, c.objetoContrato,
+            SUBSTR(c.dataPublicacao, 1, 10) AS dataPublicacao, 
+            SUBSTR(c.dataCelebracao, 1, 10) AS dataCelebracao, 
+            c.idAcordo, c.idTipoProc, c.idAdjudicante,
+            adj.designacao as nomeAdjudicatario, adj.idAdjudicatario,
+            cl.designacao as nomeAdjudicante, cl.idAdjudicante,
+            tc.descricao as tipoContrato,
+            tp.descricao as tipoProcedimento,
+            aq.descricao as acordoQuadro
         FROM Contrato c
-        LEFT JOIN ContratoAdjudicatario ca ON c.idContrato = ca.idContrato
-        LEFT JOIN Adjudicatario adj ON ca.idAdjudicatario = adj.idAdjudicatario
-        LEFT JOIN Adjudicante cl ON c.idAdjudicante = cl.idAdjudicante
-        LEFT JOIN Tipo t ON c.idContrato = t.idContrato
-        LEFT JOIN TipoContrato tc ON t.idTipoCont = tc.idTipoCont
-        LEFT JOIN TipoProcedimento tp ON c.idTipoProc = tp.idTipoProc
-        LEFT JOIN AcordoQuadro aq ON c.idAcordo = aq.idAcordo
+        -- ... (os JOINs continuam) ...
         WHERE c.idContrato=?
     ''', [cid]).fetchone()
     
@@ -74,7 +76,6 @@ def detalhes_contrato(cid):
     return render_template('contrato.html', contrato=contrato, locais=locais)
 
 
-# --- ROTA: ADJUDICATÁRIOS ---
 @app.route('/adjudicatarios/')
 def adjudicatarios():
     lista = db.execute('''
@@ -160,7 +161,7 @@ def paises():
         ORDER BY idPais
     ''').fetchall()
     
-    return render_template('pais.html', paises=paises_lista)
+    return render_template('listar_pais.html', paises=paises_lista)
 
 @app.route('/pais/distritos/<int:did>/')
 def detalhes_distrito(did):

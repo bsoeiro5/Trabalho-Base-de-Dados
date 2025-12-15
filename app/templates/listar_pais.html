@@ -1,30 +1,50 @@
 {% extends 'base.html' %}
 
+{% block title %}Lista de Países{% endblock %}
+
 {% block content %}
+<div class="container mt-4">
+    <div class="d-flex align-items-center mb-4">
+        <div class="me-3 text-primary">
+            <i class="bi bi-globe-europe-africa fs-2"></i>
+        </div>
+        <div>
+            <h1 class="mb-0">Países</h1>
+            <p class="text-muted mb-0">Lista de países registados na base de dados.</p>
+        </div>
+    </div>
 
-<div class="container my-4">
-    <h1 class="mb-4">Países Registados</h1>
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Designação do País</th>
-                    <th>Nº de Distritos/Regiões</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in pais %}
-                <tr>
-                    <td>{{ p.idPais }}</td>
-                    <td>{{ p.nome }}</td>
-                    <td>{{ p.n_distritos }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 100px;">ID</th>
+                            <th>Designação do País</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in paises %}
+                        <tr>
+                            <td class="text-center fw-bold text-secondary">
+                                {{ p.idPais }}
+                            </td>
+                            <td>
+                                {{ p.nome }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center py-4 text-muted">
+                                Não foram encontrados países.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
-
 {% endblock %}
