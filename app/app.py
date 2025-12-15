@@ -48,20 +48,36 @@ def contratos():
     return render_template('listar_contratos.html', contratos=contratos_lista)
 
 @app.route('/contratos/<int:cid>/')
+@app.route('/contratos/<int:cid>/')
 def detalhes_contrato(cid):
     contrato = db.execute('''
         SELECT 
-            c.idContrato, c.prazoExecucao, c.precoContratual, c.centralizado, c.fundamentacao, c.objetoContrato,
+            c.idContrato, 
+            c.prazoExecucao, 
+            c.precoContratual, 
+            c.centralizado, 
+            c.fundamentacao, 
+            c.objetoContrato,
             SUBSTR(c.dataPublicacao, 1, 10) AS dataPublicacao, 
             SUBSTR(c.dataCelebracao, 1, 10) AS dataCelebracao, 
-            c.idAcordo, c.idTipoProc, c.idAdjudicante,
-            adj.designacao as nomeAdjudicatario, adj.idAdjudicatario,
-            cl.designacao as nomeAdjudicante, cl.idAdjudicante,
+            c.idAcordo, 
+            c.idTipoProc, 
+            c.idAdjudicante,
+            adj.designacao as nomeAdjudicatario, 
+            adj.idAdjudicatario,
+            cl.designacao as nomeAdjudicante, 
+            cl.idAdjudicante,
             tc.descricao as tipoContrato,
             tp.descricao as tipoProcedimento,
             aq.descricao as acordoQuadro
         FROM Contrato c
-        -- ... (os JOINs continuam) ...
+        LEFT JOIN ContratoAdjudicatario ca ON c.idContrato = ca.idContrato
+        LEFT JOIN Adjudicatario adj ON ca.idAdjudicatario = adj.idAdjudicatario
+        LEFT JOIN Adjudicante cl ON c.idAdjudicante = cl.idAdjudicante
+        LEFT JOIN Tipo t ON c.idContrato = t.idContrato
+        LEFT JOIN TipoContrato tc ON t.idTipoCont = tc.idTipoCont
+        LEFT JOIN TipoProcedimento tp ON c.idTipoProc = tp.idTipoProc
+        LEFT JOIN AcordoQuadro aq ON c.idAcordo = aq.idAcordo
         WHERE c.idContrato=?
     ''', [cid]).fetchone()
     
